@@ -28,6 +28,7 @@ If you don't have it installed already, this will also install the latest Visual
 Click Next to continue."
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_DIRECTORY
+!insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_PAGE_FINISH
 
@@ -36,7 +37,8 @@ Click Next to continue."
 
 !insertmacro MUI_LANGUAGE "English"
 
-Section
+Section "LibreWolf Browser"
+  SectionIn RO
 
 	# Make sure LibreWolf is closed before the installation
 	nsProcess::_FindProcess "${EXECUTABLE}"
@@ -139,6 +141,18 @@ continue:
 	WriteRegStr HKLM "Software\Classes\LibreWolfHTM\shell\open\command" "" "$\"$INSTDIR\librewolf.exe$\" -osint -url $\"%1$\""
 
 SectionEnd
+
+Section /o "LibreWolf WinUpdater"
+SectionEnd
+
+!define MUI_FINISHPAGE_RUN
+!define MUI_FINISHPAGE_RUN_TEXT "Create desktop shortcut"
+!define MUI_FINISHPAGE_RUN_FUNCTION "CreateDesktopShortcut"
+!define MUI_FINISHPAGE_RUN_NOTCHECKED
+
+Function "CreateDesktopShortcut"
+CreateShortCut "$DESKTOP\LibreWolf.lnk" "$INSTDIR\librewolf.exe"
+FunctionEnd
 
 
 # Uninstaller
