@@ -26,6 +26,14 @@ RequestExecutionLevel admin
 !define MUI_WELCOMEPAGE_TEXT "This setup will guide you through the installation of LibreWolf.$\r$\n$\r$\n\
 If you don't have it installed already, this will also install the latest Visual C++ Redistributable.$\r$\n$\r$\n\
 Click Next to continue."
+
+!define MUI_COMPONENTSPAGE_SMALLDESC
+
+!define MUI_FINISHPAGE_RUN
+!define MUI_FINISHPAGE_RUN_TEXT "Create desktop shortcut"
+!define MUI_FINISHPAGE_RUN_FUNCTION "CreateDesktopShortcut"
+!define MUI_FINISHPAGE_RUN_NOTCHECKED
+
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_COMPONENTS
@@ -142,13 +150,13 @@ continue:
 
 SectionEnd
 
-Section /o "LibreWolf WinUpdater"
-SectionEnd
+SectionGroup "LibreWolf WinUpdater"
+	Section /o "LibreWolf WinUpdater"
+	SectionEnd
+	Section /o "Scheduled Task"
+	SectionEnd
+SectionGroupEnd
 
-!define MUI_FINISHPAGE_RUN
-!define MUI_FINISHPAGE_RUN_TEXT "Create desktop shortcut"
-!define MUI_FINISHPAGE_RUN_FUNCTION "CreateDesktopShortcut"
-!define MUI_FINISHPAGE_RUN_NOTCHECKED
 
 Function "CreateDesktopShortcut"
 CreateShortCut "$DESKTOP\LibreWolf.lnk" "$INSTDIR\librewolf.exe"
