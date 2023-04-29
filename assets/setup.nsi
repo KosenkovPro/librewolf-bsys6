@@ -196,6 +196,10 @@ ${AndIf} $0 = ${portable}
 		SectionSetFlags ${main} 0
 		SectionSetFlags ${scheduledtask} ${SF_RO}
 ${EndIf}
+${IfNot} ${SectionIsSelected} ${winupdater}
+${AndIf} $0 = ${winupdater}
+		SectionSetFlags ${scheduledtask} 0
+${EndIf}
 ${If} ${SectionIsSelected} ${scheduledtask}
 ${AndIf} $0 = ${scheduledtask}
 		SectionSetFlags ${winupdater} ${SF_SELECTED}
