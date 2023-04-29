@@ -157,7 +157,7 @@ Section /o "LibreWolf Portable" portable
 	File LibreWolf-Portable.exe
 SectionEnd
 
-SectionGroup /e "LibreWolf WinUpdater"
+SectionGroup /e "LibreWolf WinUpdater" winupdatergroup
 	Section /o "WinUpdater" winupdater
 		File LibreWolf-WinUpdater.exe
 	SectionEnd
@@ -167,8 +167,11 @@ SectionGroupEnd
 
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
-  !insertmacro MUI_DESCRIPTION_TEXT ${winupdater} "Adds Windows Scheduled Task to automatically update LibreWolf at log on and every 4 hours."
-  !insertmacro MUI_DESCRIPTION_TEXT ${scheduledtask} "Adds Windows Scheduled Task to automatically update LibreWolf at log on and every 4 hours."
+  !insertmacro MUI_DESCRIPTION_TEXT ${main} "Install the browser for all users"
+  !insertmacro MUI_DESCRIPTION_TEXT ${portable} "Extract the browser to a folder or removable storage device for portable use"
+  !insertmacro MUI_DESCRIPTION_TEXT ${winupdatergroup} "A companion tool to update LibreWolf with a single click"
+  !insertmacro MUI_DESCRIPTION_TEXT ${winupdater} "A companion tool to update LibreWolf with a single click"
+  !insertmacro MUI_DESCRIPTION_TEXT ${scheduledtask} "Adds Windows scheduled task to automatically update LibreWolf at log on and every 4 hours"
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 
