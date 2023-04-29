@@ -1,5 +1,6 @@
 !include "MUI2.nsh"
 !include "LogicLib.nsh"
+!include "Sections.nsh"
 !addplugindir .
 !addplugindir x86-ansi
 
@@ -45,7 +46,7 @@ Click Next to continue."
 
 !insertmacro MUI_LANGUAGE "English"
 
-Section "LibreWolf Browser"
+Section "LibreWolf Browser" main
   SectionIn RO
 
 	# Make sure LibreWolf is closed before the installation
@@ -150,12 +151,49 @@ continue:
 
 SectionEnd
 
-SectionGroup "LibreWolf WinUpdater"
-	Section /o "LibreWolf WinUpdater"
+Section /o "LibreWolf Portable" portable
+	SetOutPath $INSTDIR
+	File /r librewolf
+	File LibreWolf-Portable.exe
+SectionEnd
+
+SectionGroup /e "LibreWolf WinUpdater"
+	Section /o "WinUpdater" winupdater
+		File LibreWolf-WinUpdater.exe
 	SectionEnd
-	Section /o "Scheduled Task"
+	Section /o "Scheduled Task" scheduledtask
 	SectionEnd
 SectionGroupEnd
+
+
+!insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
+  !insertmacro MUI_DESCRIPTION_TEXT ${winupdater} "Adds Windows Scheduled Task to automatically update LibreWolf at log on and every 4 hours."
+  !insertmacro MUI_DESCRIPTION_TEXT ${scheduledtask} "Adds Windows Scheduled Task to automatically update LibreWolf at log on and every 4 hours."
+!insertmacro MUI_FUNCTION_DESCRIPTION_END
+
+
+Function .onSelChange
+${If} ${SectionIsSelected} ${main}
+${AndIf} $0 = ${main}
+		SectionSetFlags ${portable} 0
+		SectionSetFlags ${main} 17 ; SF_SELECTED & SF_RO
+		${If} ${SectionIsSelected} ${winupdater}
+			SectionSetFlags ${scheduledtask} ${SF_SELECTED}
+		${Else}
+			SectionSetFlags ${scheduledtask} 0
+		${EndIf}
+${EndIf}
+${If} ${SectionIsSelected} ${portable}
+${AndIf} $0 = ${portable}
+		SectionSetFlags ${portable} 17 ; SF_SELECTED & SF_RO
+		SectionSetFlags ${main} 0
+		SectionSetFlags ${scheduledtask} ${SF_RO}
+${EndIf}
+${If} ${SectionIsSelected} ${scheduledtask}
+${AndIf} $0 = ${scheduledtask}
+		SectionSetFlags ${winupdater} ${SF_SELECTED}
+${EndIf}
+FunctionEnd
 
 
 Function "CreateDesktopShortcut"
