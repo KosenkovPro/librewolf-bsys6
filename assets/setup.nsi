@@ -36,8 +36,8 @@ Click Next to continue."
 !define MUI_FINISHPAGE_RUN_NOTCHECKED
 
 !insertmacro MUI_PAGE_WELCOME
-!insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_COMPONENTS
+!insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_PAGE_FINISH
 
@@ -172,9 +172,15 @@ SectionGroupEnd
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 
+Function .onInit
+	Var /GLOBAL DEFAULTINSTDIR
+	StrCpy $DEFAULTINSTDIR $INSTDIR
+FunctionEnd
+
 Function .onSelChange
 ${If} ${SectionIsSelected} ${main}
 ${AndIf} $0 = ${main}
+		StrCpy $INSTDIR $DEFAULTINSTDIR
 		SectionSetFlags ${portable} 0
 		SectionSetFlags ${main} 17 ; SF_SELECTED & SF_RO
 		${If} ${SectionIsSelected} ${winupdater}
@@ -185,6 +191,7 @@ ${AndIf} $0 = ${main}
 ${EndIf}
 ${If} ${SectionIsSelected} ${portable}
 ${AndIf} $0 = ${portable}
+		StrCpy $INSTDIR "$DESKTOP\LibreWolf Portable"
 		SectionSetFlags ${portable} 17 ; SF_SELECTED & SF_RO
 		SectionSetFlags ${main} 0
 		SectionSetFlags ${scheduledtask} ${SF_RO}
