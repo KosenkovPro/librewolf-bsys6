@@ -162,9 +162,59 @@ SectionGroup /e "LibreWolf WinUpdater" winupdatergroup
 		File LibreWolf-WinUpdater.exe
 	SectionEnd
 	Section /o "Scheduled Task" scheduledtask
+		DetailPrint "Creating Scheduled Task"
+		; https://ss64.com/nt/schtasks.html
+		; There is no better way to create _this_ specific task with schtasks.exe other than with this ugly xml file
+		File "/oname=$PLUGINSDIR\winupdater_task.xml" "winupdater_task.xml"
+		FileOpen $0 "$PLUGINSDIR\winupdater_task.xml" a
+		FileSeek $0 0 END
+		FileWrite $0 "      <Command>$INSTDIR\LibreWolf-WinUpdater.exe</Command>$\r$\n"
+		FileWrite $0 "      <Arguments>/Scheduled</Arguments>$\r$\n"
+		FileWrite $0 "    </Exec>$\r$\n"
+		FileWrite $0 "  </Actions>$\r$\n"
+		FileWrite $0 "</Task>"
+		FileClose $0
+		nsExec::ExecToLog 'schtasks.exe /create /xml "$PLUGINSDIR\winupdater_task.xml" /tn "LibreWolf WinUpdater" /f'
 	SectionEnd
 SectionGroupEnd
 
+# Uninstaller
+section "Uninstall"
+
+	# Kill LibreWolf if it is still running
+	nsProcess::_FindProcess "${EXECUTABLE}"
+	Pop $R0
+	${If} $R0 = 0
+		DetailPrint "${APPNAME} is still running, killing it..."
+		nsProcess::_KillProcess "${EXECUTABLE}"
+		Sleep 2000
+	${EndIf}
+
+	# Remove Start Menu launcher
+	delete "$SMPROGRAMS\${COMPANYNAME}\${APPNAME}.lnk"
+	delete "$SMPROGRAMS\${COMPANYNAME}\Uninstall.lnk"
+	# Try to remove the Start Menu folder - this will only happen if it is empty
+	rmDir "$SMPROGRAMS\${COMPANYNAME}"
+ 
+	# Remove files
+	rmDir /r $INSTDIR
+
+	# Remove uninstaller information from the registry
+	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANYNAME} ${APPNAME}"
+	
+	#
+	# Windows default browser integration
+	#
+	
+	DeleteRegKey HKLM "Software\Clients\StartMenuInternet\LibreWolf"
+	DeleteRegKey HKLM "Software\RegisteredApplications"
+	DeleteRegKey HKLM "Software\Classes\LibreWolfHTM"
+
+
+	DetailPrint "Removing Scheduled Task"
+	nsExec::ExecToLog 'schtasks.exe /delete /tn "LibreWolf WinUpdater" /f'
+
+sectionEnd
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
   !insertmacro MUI_DESCRIPTION_TEXT ${main} "Install the browser for all users"
@@ -220,38 +270,3 @@ Function "CreateDesktopShortcut"
 		CreateShortCut "$DESKTOP\LibreWolf.lnk" "$INSTDIR\librewolf.exe" "" "$INSTDIR\librewolf.ico" 0
 	${EndIf}
 FunctionEnd
-
-
-# Uninstaller
-section "Uninstall"
-
-	# Kill LibreWolf if it is still running
-	nsProcess::_FindProcess "${EXECUTABLE}"
-	Pop $R0
-	${If} $R0 = 0
-		DetailPrint "${APPNAME} is still running, killing it..."
-		nsProcess::_KillProcess "${EXECUTABLE}"
-		Sleep 2000
-	${EndIf}
-
-	# Remove Start Menu launcher
-	delete "$SMPROGRAMS\${COMPANYNAME}\${APPNAME}.lnk"
-	delete "$SMPROGRAMS\${COMPANYNAME}\Uninstall.lnk"
-	# Try to remove the Start Menu folder - this will only happen if it is empty
-	rmDir "$SMPROGRAMS\${COMPANYNAME}"
- 
-	# Remove files
-	rmDir /r $INSTDIR
-
-	# Remove uninstaller information from the registry
-	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANYNAME} ${APPNAME}"
-	
-	#
-	# Windows default browser integration
-	#
-	
-	DeleteRegKey HKLM "Software\Clients\StartMenuInternet\LibreWolf"
-	DeleteRegKey HKLM "Software\RegisteredApplications"
-	DeleteRegKey HKLM "Software\Classes\LibreWolfHTM"
-
-sectionEnd
