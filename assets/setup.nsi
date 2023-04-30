@@ -189,11 +189,8 @@ Function .onSelChange
 		StrCpy $INSTALL_TYPE "normal"
 		SectionSetFlags ${portable} 0
 		SectionSetFlags ${main} 17 ; SF_SELECTED & SF_RO
-		${If} ${SectionIsSelected} ${winupdater}
-			SectionSetFlags ${scheduledtask} ${SF_SELECTED}
-		${Else}
-			SectionSetFlags ${scheduledtask} 0
-		${EndIf}
+		SectionSetFlags ${winupdater} 0
+		SectionSetFlags ${scheduledtask} 0
 	${EndIf}
 	${If} ${SectionIsSelected} ${portable}
 	${AndIf} $0 = ${portable}
@@ -201,9 +198,11 @@ Function .onSelChange
 		StrCpy $INSTALL_TYPE "portable"
 		SectionSetFlags ${portable} 17 ; SF_SELECTED & SF_RO
 		SectionSetFlags ${main} 0
+		SectionSetFlags ${winupdater} ${SF_SELECTED}
 		SectionSetFlags ${scheduledtask} ${SF_RO}
 	${EndIf}
 	${IfNot} ${SectionIsSelected} ${winupdater}
+	${AndIfNot} ${SectionIsSelected} ${portable}
 	${AndIf} $0 = ${winupdater}
 		SectionSetFlags ${scheduledtask} 0
 	${EndIf}
