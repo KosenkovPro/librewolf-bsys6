@@ -96,9 +96,12 @@ continue:
 	File /r LibreWolf\*.*
 
 	# Start Menu
-	createDirectory "$SMPROGRAMS\${COMPANYNAME}"
-	createShortCut "$SMPROGRAMS\${COMPANYNAME}\${APPNAME}.lnk" "$INSTDIR\${PROGNAME}.exe" "" "$INSTDIR\${MUI_ICON}"
-	createShortCut "$SMPROGRAMS\${COMPANYNAME}\Uninstall.lnk" "$INSTDIR\uninstall.exe" "" ""
+	RMDir /r "$SMPROGRAMS\${COMPANYNAME}" ; Previously those files were stored for the user, we don't want double entries
+	SetShellVarContext all
+	CreateDirectory "$SMPROGRAMS\${COMPANYNAME}"
+	CreateShortCut "$SMPROGRAMS\${COMPANYNAME}\${APPNAME}.lnk" "$INSTDIR\${PROGNAME}.exe" "" "$INSTDIR\${MUI_ICON}"
+	CreateShortCut "$SMPROGRAMS\${COMPANYNAME}\Uninstall.lnk" "$INSTDIR\uninstall.exe" "" ""
+	SetShellVarContext current
 
 	# Uninstaller 
 	writeUninstaller "$INSTDIR\uninstall.exe"
@@ -159,7 +162,16 @@ SectionEnd
 
 SectionGroup /e "LibreWolf WinUpdater" winupdatergroup
 	Section /o "WinUpdater" winupdater
-		File LibreWolf-WinUpdater.exe
+		${If} ${SectionIsSelected} ${portable}
+			File LibreWolf-WinUpdater.exe
+		${Else}
+			SetOutPath "$APPDATA\LibreWolf"
+			File LibreWolf-WinUpdater.exe
+			File LibreWolf-WinUpdater.ico
+			SetShellVarContext current
+			CreateDirectory "$SMPROGRAMS\${COMPANYNAME}"
+			CreateShortCut "$SMPROGRAMS\${COMPANYNAME}\LibreWolf WinUpdater.lnk" "$APPDATA\LibreWolf\LibreWolf-WinUpdater.exe" "" "$APPDATA\LibreWolf\LibreWolf-WinUpdater.ico"
+		${EndIf}
 	SectionEnd
 	Section /o "Scheduled Task" scheduledtask
 		DetailPrint "Creating Scheduled Task"
@@ -168,7 +180,7 @@ SectionGroup /e "LibreWolf WinUpdater" winupdatergroup
 		File "/oname=$PLUGINSDIR\winupdater_task.xml" "winupdater_task.xml"
 		FileOpen $0 "$PLUGINSDIR\winupdater_task.xml" a
 		FileSeek $0 0 END
-		FileWrite $0 "      <Command>$INSTDIR\LibreWolf-WinUpdater.exe</Command>$\r$\n"
+		FileWrite $0 "      <Command>$APPDATA\LibreWolf\LibreWolf-WinUpdater.exe</Command>$\r$\n"
 		FileWrite $0 "      <Arguments>/Scheduled</Arguments>$\r$\n"
 		FileWrite $0 "    </Exec>$\r$\n"
 		FileWrite $0 "  </Actions>$\r$\n"
@@ -190,14 +202,14 @@ section "Uninstall"
 		Sleep 2000
 	${EndIf}
 
-	# Remove Start Menu launcher
-	delete "$SMPROGRAMS\${COMPANYNAME}\${APPNAME}.lnk"
-	delete "$SMPROGRAMS\${COMPANYNAME}\Uninstall.lnk"
-	# Try to remove the Start Menu folder - this will only happen if it is empty
-	rmDir "$SMPROGRAMS\${COMPANYNAME}"
+	# Remove the Start Menu folder
+	SetShellVarContext all
+	RmDir /r "$SMPROGRAMS\${COMPANYNAME}"
+	SetShellVarContext current
+	RmDir /r "$SMPROGRAMS\${COMPANYNAME}"
  
 	# Remove files
-	rmDir /r $INSTDIR
+	RmDir /r $INSTDIR
 
 	# Remove uninstaller information from the registry
 	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANYNAME} ${APPNAME}"
@@ -264,7 +276,8 @@ FunctionEnd
 
 
 Function "CreateDesktopShortcut"
-	${If} $INSTALL_TYPE == "portable"
+	SetShellVarContext current
+	${If} ${SectionIsSelected} ${portable}
 		CreateShortCut "$DESKTOP\LibreWolf.lnk" "$INSTDIR\LibreWolf-Portable.exe" "" "$INSTDIR\LibreWolf\librewolf.ico" 0
 	${Else}
 		CreateShortCut "$DESKTOP\LibreWolf.lnk" "$INSTDIR\librewolf.exe" "" "$INSTDIR\librewolf.ico" 0
