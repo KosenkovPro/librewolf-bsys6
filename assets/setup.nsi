@@ -101,7 +101,6 @@ continue:
 	CreateDirectory "$SMPROGRAMS\${COMPANYNAME}"
 	CreateShortCut "$SMPROGRAMS\${COMPANYNAME}\${APPNAME}.lnk" "$INSTDIR\${PROGNAME}.exe" "" "$INSTDIR\${MUI_ICON}"
 	CreateShortCut "$SMPROGRAMS\${COMPANYNAME}\Uninstall.lnk" "$INSTDIR\uninstall.exe" "" ""
-	SetShellVarContext current
 
 	# Uninstaller 
 	writeUninstaller "$INSTDIR\uninstall.exe"
@@ -167,10 +166,10 @@ SectionGroup /e "LibreWolf WinUpdater" winupdatergroup
 		${Else}
 			SetOutPath "$APPDATA\LibreWolf"
 			File LibreWolf-WinUpdater.exe
-			File LibreWolf-WinUpdater.ico
 			SetShellVarContext current
 			CreateDirectory "$SMPROGRAMS\${COMPANYNAME}"
-			CreateShortCut "$SMPROGRAMS\${COMPANYNAME}\LibreWolf WinUpdater.lnk" "$APPDATA\LibreWolf\LibreWolf-WinUpdater.exe" "" "$APPDATA\LibreWolf\LibreWolf-WinUpdater.ico"
+			CreateShortCut "$SMPROGRAMS\${COMPANYNAME}\LibreWolf WinUpdater.lnk" "$APPDATA\LibreWolf\LibreWolf-WinUpdater.exe" "" "$APPDATA\LibreWolf\LibreWolf-WinUpdater.exe"
+			SetShellVarContext all
 		${EndIf}
 	SectionEnd
 	Section /o "Scheduled Task" scheduledtask
@@ -203,9 +202,9 @@ section "Uninstall"
 	${EndIf}
 
 	# Remove the Start Menu folder
-	SetShellVarContext all
-	RmDir /r "$SMPROGRAMS\${COMPANYNAME}"
 	SetShellVarContext current
+	RmDir /r "$SMPROGRAMS\${COMPANYNAME}"
+	SetShellVarContext all
 	RmDir /r "$SMPROGRAMS\${COMPANYNAME}"
  
 	# Remove files
@@ -276,10 +275,10 @@ FunctionEnd
 
 
 Function "CreateDesktopShortcut"
-	SetShellVarContext current
+	SetShellVarContext all
 	${If} ${SectionIsSelected} ${portable}
 		CreateShortCut "$DESKTOP\LibreWolf.lnk" "$INSTDIR\LibreWolf-Portable.exe" "" "$INSTDIR\LibreWolf\librewolf.ico" 0
 	${Else}
-		CreateShortCut "$DESKTOP\LibreWolf.lnk" "$INSTDIR\librewolf.exe" "" "$INSTDIR\librewolf.ico" 0
+		CreateShortCut "$DESKTOP\LibreWolf.lnk" "$INSTDIR\librewolf.exe" "" "$INSTDIR\librewolf.exe" 0
 	${EndIf}
 FunctionEnd
