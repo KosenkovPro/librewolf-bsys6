@@ -93,7 +93,7 @@ continue:
 
 	# Copy files
 	SetOutPath $INSTDIR
-	File /r librewolf\*.*
+	File /r LibreWolf\*.*
 
 	# Start Menu
 	createDirectory "$SMPROGRAMS\${COMPANYNAME}"
@@ -153,7 +153,7 @@ SectionEnd
 
 Section /o "LibreWolf Portable" portable
 	SetOutPath $INSTDIR
-	File /r librewolf
+	File /r LibreWolf
 	File LibreWolf-Portable.exe
 SectionEnd
 
@@ -181,8 +181,8 @@ Function .onInit
 FunctionEnd
 
 Function .onSelChange
-${If} ${SectionIsSelected} ${main}
-${AndIf} $0 = ${main}
+	${If} ${SectionIsSelected} ${main}
+	${AndIf} $0 = ${main}
 		StrCpy $INSTDIR $DEFAULTINSTDIR
 		SectionSetFlags ${portable} 0
 		SectionSetFlags ${main} 17 ; SF_SELECTED & SF_RO
@@ -191,27 +191,27 @@ ${AndIf} $0 = ${main}
 		${Else}
 			SectionSetFlags ${scheduledtask} 0
 		${EndIf}
-${EndIf}
-${If} ${SectionIsSelected} ${portable}
-${AndIf} $0 = ${portable}
+	${EndIf}
+	${If} ${SectionIsSelected} ${portable}
+	${AndIf} $0 = ${portable}
 		StrCpy $INSTDIR "$DESKTOP\LibreWolf Portable"
 		SectionSetFlags ${portable} 17 ; SF_SELECTED & SF_RO
 		SectionSetFlags ${main} 0
 		SectionSetFlags ${scheduledtask} ${SF_RO}
-${EndIf}
-${IfNot} ${SectionIsSelected} ${winupdater}
-${AndIf} $0 = ${winupdater}
+	${EndIf}
+	${IfNot} ${SectionIsSelected} ${winupdater}
+	${AndIf} $0 = ${winupdater}
 		SectionSetFlags ${scheduledtask} 0
-${EndIf}
-${If} ${SectionIsSelected} ${scheduledtask}
-${AndIf} $0 = ${scheduledtask}
+	${EndIf}
+	${If} ${SectionIsSelected} ${scheduledtask}
+	${AndIf} $0 = ${scheduledtask}
 		SectionSetFlags ${winupdater} ${SF_SELECTED}
-${EndIf}
+	${EndIf}
 FunctionEnd
 
 
 Function "CreateDesktopShortcut"
-CreateShortCut "$DESKTOP\LibreWolf.lnk" "$INSTDIR\librewolf.exe"
+	CreateShortCut "$DESKTOP\LibreWolf.lnk" "$INSTDIR\librewolf.exe"
 FunctionEnd
 
 
