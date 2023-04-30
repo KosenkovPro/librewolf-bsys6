@@ -16,17 +16,7 @@ cd librewolf-$VERSION/LibreWolf
 unzip -q $PACKAGE
 mv librewolf/* .
 rmdir librewolf
-# https://gitlab.com/librewolf-community/browser/windows/-/issues/244
-case "$ARCH" in
-x86_64) VC_REDIST_URL="https://gitlab.com/librewolf-community/browser/windows/uploads/7106b776dc663d985bb88eabeb4c5d7d/vc_redist.x64-extracted.zip" ;;
-i686) VC_REDIST_URL="https://gitlab.com/librewolf-community/browser/bsys6/uploads/c4f4203ba35a344f28de28c525951e40/vc_redist_x32.zip" ;;
-*) echo "Notice: No Visual C++ Redistributable available for architecture '$ARCH', excluding the dlls from the windows portable" ;;
-esac
-if [ -n "${VC_REDIST_URL:-}" ]; then
-  wget -q -O ./vc_redist.zip "$VC_REDIST_URL"
-  unzip -q vc_redist.zip
-  rm vc_redist.zip
-fi
+$BSYS6/utils/vc_redist.sh
 cd ..
 
 # ahk-tools by @ltGuillaume

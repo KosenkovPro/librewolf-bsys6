@@ -176,14 +176,17 @@ SectionGroupEnd
 
 
 Function .onInit
-	Var /GLOBAL DEFAULTINSTDIR
-	StrCpy $DEFAULTINSTDIR $INSTDIR
+	Var /GLOBAL DEFAULT_INSTDIR
+	Var /GLOBAL INSTALL_TYPE
+	StrCpy $DEFAULT_INSTDIR $INSTDIR
+	StrCpy $INSTALL_TYPE "normal"
 FunctionEnd
 
 Function .onSelChange
 	${If} ${SectionIsSelected} ${main}
 	${AndIf} $0 = ${main}
-		StrCpy $INSTDIR $DEFAULTINSTDIR
+		StrCpy $INSTDIR $DEFAULT_INSTDIR
+		StrCpy $INSTALL_TYPE "normal"
 		SectionSetFlags ${portable} 0
 		SectionSetFlags ${main} 17 ; SF_SELECTED & SF_RO
 		${If} ${SectionIsSelected} ${winupdater}
@@ -195,6 +198,7 @@ Function .onSelChange
 	${If} ${SectionIsSelected} ${portable}
 	${AndIf} $0 = ${portable}
 		StrCpy $INSTDIR "$DESKTOP\LibreWolf Portable"
+		StrCpy $INSTALL_TYPE "portable"
 		SectionSetFlags ${portable} 17 ; SF_SELECTED & SF_RO
 		SectionSetFlags ${main} 0
 		SectionSetFlags ${scheduledtask} ${SF_RO}
@@ -211,7 +215,11 @@ FunctionEnd
 
 
 Function "CreateDesktopShortcut"
-	CreateShortCut "$DESKTOP\LibreWolf.lnk" "$INSTDIR\librewolf.exe"
+	${If} $INSTALL_TYPE == "portable"
+		CreateShortCut "$DESKTOP\LibreWolf.lnk" "$INSTDIR\LibreWolf-Portable.exe" "" "$INSTDIR\LibreWolf\librewolf.ico" 0
+	${Else}
+		CreateShortCut "$DESKTOP\LibreWolf.lnk" "$INSTDIR\librewolf.exe" "" "$INSTDIR\librewolf.ico" 0
+	${EndIf}
 FunctionEnd
 
 
