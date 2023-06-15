@@ -164,12 +164,15 @@ SectionGroup /e "LibreWolf WinUpdater" winupdatergroup
 		${If} ${SectionIsSelected} ${portable}
 			File LibreWolf-WinUpdater.exe
 		${Else}
-			SetOutPath "$APPDATA\LibreWolf"
-			File LibreWolf-WinUpdater.exe
-			SetShellVarContext current
-			CreateDirectory "$SMPROGRAMS\${COMPANYNAME}"
-			CreateShortCut "$SMPROGRAMS\${COMPANYNAME}\LibreWolf WinUpdater.lnk" "$APPDATA\LibreWolf\LibreWolf-WinUpdater.exe" "" "$APPDATA\LibreWolf\LibreWolf-WinUpdater.exe"
 			SetShellVarContext all
+			SetOutPath "$LocalAppData\LibreWolf" 
+			File LibreWolf-WinUpdater.exe
+			File install_winupdater.bat
+			ShellExecAsUser::ShellExecAsUser "" "$LocalAppData\LibreWolf\install_winupdater.bat"
+			; SetShellVarContext current
+			; CreateDirectory "$SMPROGRAMS\${COMPANYNAME}"
+			; CreateShortCut "$SMPROGRAMS\${COMPANYNAME}\LibreWolf WinUpdater.lnk" "$APPDATA\LibreWolf\LibreWolf-WinUpdater.exe" "" "$APPDATA\LibreWolf\LibreWolf-WinUpdater.exe"
+			; SetShellVarContext all
 		${EndIf}
 	SectionEnd
 	Section /o "Scheduled Task" scheduledtask
@@ -185,7 +188,7 @@ SectionGroup /e "LibreWolf WinUpdater" winupdatergroup
 		FileWrite $0 "  </Actions>$\r$\n"
 		FileWrite $0 "</Task>"
 		FileClose $0
-		nsExec::ExecToLog 'schtasks.exe /create /xml "$PLUGINSDIR\winupdater_task.xml" /tn "LibreWolf WinUpdater" /f'
+		ShellExecAsUser::ShellExecAsUser "" 'schtasks.exe /create /xml "$PLUGINSDIR\winupdater_task.xml" /tn "LibreWolf WinUpdater" /f'
 	SectionEnd
 SectionGroupEnd
 
@@ -280,5 +283,6 @@ Function "CreateDesktopShortcut"
 		CreateShortCut "$DESKTOP\LibreWolf.lnk" "$INSTDIR\LibreWolf-Portable.exe" "" "$INSTDIR\LibreWolf\librewolf.ico" 0
 	${Else}
 		CreateShortCut "$DESKTOP\LibreWolf.lnk" "$INSTDIR\librewolf.exe" "" "$INSTDIR\librewolf.exe" 0
+		ShellExecAsUser::ShellExecAsUser "" "$DESKTOP\LibreWolf.lnk"
 	${EndIf}
 FunctionEnd
