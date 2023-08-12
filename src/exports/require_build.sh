@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/usr/bin/emv bash
 set -eu
 
 source $BSYS6/exports/target.sh
