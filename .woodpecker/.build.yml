@@ -1,0 +1,47 @@
+when:
+  event: manual
+
+variables:
+  # We need to make sure the WORKDIR and .mozbuild are carried over to the next steps
+  - &prepare-env "export WORKDIR=/woodpecker/src/codeberg.org/librewolf/bsys6/work && rm -rf ~/.mozbuild &&  MOZBUILD_STATE_PATH=/woodpecker/src/codeberg.org/librewolf/bsys6/.mozbuild"
+
+steps:
+  source:
+    image: registry.gitlab.com/librewolf-community/browser/bsys6/linux:latest
+    commands:
+      - *prepare-env
+      - ./bsys6 source
+
+  build:
+    image: registry.gitlab.com/librewolf-community/browser/bsys6/linux:latest
+    commands:
+      - *prepare-env
+      - ./bsys6 build
+
+  package:
+    image: registry.gitlab.com/librewolf-community/browser/bsys6/linux:latest
+    commands:
+      - *prepare-env
+      - ./bsys6 package
+
+  deb:
+    image: registry.gitlab.com/librewolf-community/browser/bsys6/linux:latest
+    commands:
+      - *prepare-env
+      - ./bsys6 deb
+
+  rpm:
+    image: registry.gitlab.com/librewolf-community/browser/bsys6/linux:latest
+    commands:
+      - *prepare-env
+      - ./bsys6 rpm
+
+  upload:
+    image: vividboarder/drone-webdav
+    settings:
+      file: "*.{deb,rpm,tar.bz2,sha256sum}"
+      destination: https://u365813.your-storagebox.de/artifacts/${CI_BUILD_NUMBER}
+      username:
+        from_secret: WEBDAV_USER
+      password:
+        from_secret: WEBDAV_PASSWORD

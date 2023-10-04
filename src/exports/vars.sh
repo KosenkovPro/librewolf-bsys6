@@ -14,7 +14,11 @@ if [ -z "${ARCH:-}" ]; then
 fi
 
 if [ -z "${MOZBUILD:-}" ]; then
-  export MOZBUILD="$HOME/.mozbuild"
+  if [ -z "${MOZBUILD_STATE_PATH:-}" ]; then
+    export MOZBUILD="$HOME/.mozbuild"
+  else
+    export MOZBUILD="$MOZBUILD_STATE_PATH"
+  fi
 fi
 
 if [ -z "${WORKDIR:-}" ]; then
