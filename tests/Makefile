@@ -6,7 +6,7 @@
 #  TARGET  - The target platform (available: linux windows macos; currently: linux)
 #  ARCH    - The target architecture (available: x86_64 arm64 i686; currently: x86_64)
 
-PHONY_TARGETS = help currently local build world world-linux world-macos world-windows clean clobber source update bootstrap world-debian world-archlinux
+PHONY_TARGETS = help currently local build world world-linux world-macos world-windows clean clobber source update bootstrap  world-archlinux world-debian world-docker
 
 # these are the commands to run a full clean build.
 full_build = clean bootstrap prepare build package
@@ -79,6 +79,13 @@ build :
 
 
 
+#
+# world-docker is probably the worst thing I can do
+# to my quad core, a total of 2*7=14 builds of LW.
+#
+
+world-docker : world-archlinux world-debian
+
 
 world-archlinux :
 
@@ -87,4 +94,3 @@ world-archlinux :
 world-debian :
 
 	docker run --rm -v "$$(pwd):/cwd" -w /cwd debian /bin/sh -c tests/world-debian.sh
-
