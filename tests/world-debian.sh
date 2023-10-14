@@ -6,5 +6,5 @@ apt-get -y upgrade
 apt-get -y install make curl jq
 
 cd /cwd
-make world
+make -f tests/Makefile.docker world
 

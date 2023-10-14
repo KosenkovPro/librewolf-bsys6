@@ -4,5 +4,5 @@ pacman -Syu
 pacman -S --noconfirm make jq python3 python-pip
 
 cd /cwd
-make world
+make -f tests/Makefile.docker world
 

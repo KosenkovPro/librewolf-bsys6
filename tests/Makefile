@@ -9,7 +9,7 @@
 PHONY_TARGETS = help currently local build world world-linux world-macos world-windows clean clobber source update bootstrap  world-archlinux world-debian world-docker
 
 # these are the commands to run a full clean build.
-full_build = clean bootstrap prepare build package
+full_build = clean bootstrap source prepare build package
 
 
 .PHONY : $(PHONY_TARGETS)
@@ -37,13 +37,13 @@ world : world-linux world-macos world-windows
 
 
 world-linux :
-	( t=linux; for a in x86_64 arm64 i686; do TARGET=$$t ARCH=$$a ${MAKE} build; done )
+	( t=linux; for a in x86_64 arm64 i686; do TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build; done )
 
 world-macos :
-	( t=macos; for a in x86_64 arm64; do TARGET=$$t ARCH=$$a ${MAKE} build; done )
+	( t=macos; for a in x86_64 arm64; do TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build; done )
 
 world-windows :
-	( t=windows; for a in x86_64 i686; do TARGET=$$t ARCH=$$a ${MAKE} build; done )
+	( t=windows; for a in x86_64 i686; do TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build; done )
 
 
 
