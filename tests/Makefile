@@ -89,8 +89,8 @@ world-docker : world-archlinux world-debian
 
 world-archlinux :
 
-	docker run --rm -v "$$(pwd):/cwd" -w /cwd archlinux /bin/sh -c tests/world-archlinux.sh
+	docker run -it --rm -v "$$(pwd):/cwd:rw" -w /cwd archlinux /bin/sh -c tests/world-archlinux.sh
 
 world-debian :
 
-	docker run --rm -v "$$(pwd):/cwd" -w /cwd debian /bin/sh -c tests/world-debian.sh
+	docker run -it --rm -v "$$(pwd):/cwd:rw" -w /cwd debian /bin/sh -c tests/world-debian.sh
