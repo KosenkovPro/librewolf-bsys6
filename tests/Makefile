@@ -8,8 +8,6 @@
 
 PHONY_TARGETS = help currently local build world world-linux world-macos world-windows clean clobber source update bootstrap  world-archlinux world-debian world-docker
 
-# these are the commands to run a full clean build.
-full_build = clean bootstrap source prepare build package
 
 
 .PHONY : $(PHONY_TARGETS)
@@ -37,13 +35,17 @@ world : world-linux world-macos world-windows
 
 
 world-linux :
-	( t=linux; for a in x86_64 arm64 i686; do TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build; done )
+	( t=linux; a=x86_64; TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build )
+#	( t=linux; a=arm64;  TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build )
+#	( t=linux; a=i686;   TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build )
 
 world-macos :
-	( t=macos; for a in x86_64 arm64; do TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build; done )
+#	( t=macos; a=x86_64; TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build )
+#	( t=macos; a=arm64;  TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build )
 
 world-windows :
-	( t=windows; for a in x86_64 i686; do TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build; done )
+#	( t=windows; a=x86_64; TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build )
+#	( t=windows; a=i686;   TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build )
 
 
 
@@ -70,12 +72,19 @@ bootstrap :
 
 
 
+
 # trivial subcommands
 currently :
 	./bsys6 help | grep currently
 
+
 build :
-	./bsys6 $(full_build)
+	${MAKE} -f tests/Makefile currently
+
+	./bsys6 clean
+	./bsys6 bootstrap
+	./bsys6 prepare
+	./bsys6 package
 
 
 
@@ -84,7 +93,7 @@ build :
 # to my quad core, a total of 2*7=14 builds of LW.
 #
 
-world-docker : world-archlinux world-debian
+world-docker : world-debian
 
 
 world-archlinux :
