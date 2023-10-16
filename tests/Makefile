@@ -36,16 +36,16 @@ world : world-linux world-macos world-windows
 
 world-linux :
 	( t=linux; a=x86_64; TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build )
-#	( t=linux; a=arm64;  TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build )
-#	( t=linux; a=i686;   TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build )
+	( t=linux; a=arm64;  TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build )
+	( t=linux; a=i686;   TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build )
 
 world-macos :
-#	( t=macos; a=x86_64; TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build )
-#	( t=macos; a=arm64;  TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build )
+	( t=macos; a=x86_64; TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build )
+	( t=macos; a=arm64;  TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build )
 
 world-windows :
-#	( t=windows; a=x86_64; TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build )
-#	( t=windows; a=i686;   TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build )
+	( t=windows; a=x86_64; TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build )
+	( t=windows; a=i686;   TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build )
 
 
 
@@ -93,7 +93,7 @@ build :
 # to my quad core, a total of 2*7=14 builds of LW.
 #
 
-world-docker : world-debian
+world-docker : world-archlinux world-debian
 
 
 world-archlinux :
