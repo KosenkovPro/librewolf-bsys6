@@ -35,17 +35,17 @@ world : world-linux world-macos world-windows
 
 
 world-linux :
-	( t=linux; a=x86_64; TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build )
-	( t=linux; a=arm64;  TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build )
-	( t=linux; a=i686;   TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build )
+	( t=linux; a=x86_64; TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build && ./bsys6 deb && ./bsys6 rpm )
+	( t=linux; a=arm64;  TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build && ./bsys6 deb && ./bsys6 rpm )
+	( t=linux; a=i686;   TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build && ./bsys6 deb && ./bsys6 rpm )
 
 world-macos :
 	( t=macos; a=x86_64; TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build )
 	( t=macos; a=arm64;  TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build )
 
 world-windows :
-	( t=windows; a=x86_64; TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build )
-	( t=windows; a=i686;   TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build )
+	( t=windows; a=x86_64; TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build && ./bsys6 setup msix portable nupkg )
+	( t=windows; a=i686;   TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build && ./bsys6 setup msix portable nupkg )
 
 
 
