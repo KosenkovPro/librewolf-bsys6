@@ -1,5 +1,10 @@
-all :
+.PHONY : debian arch world
+
+debian :
 	${MAKE} -f tests/Makefile world-debian
 
+arch :
+	${MAKE} -f tests/Makefile world-archlinux
+
 world :
-	${MAKE} -f test/Makefile world-docker
+	${MAKE} -f tests/Makefile world-docker
