@@ -35,9 +35,9 @@ world : world-linux world-macos world-windows
 
 
 world-linux :
-	( t=linux; a=x86_64; TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build && TARGET=$$t ARCH=$$a ./bsys6 deb && ./bsys6 rpm )
-	( t=linux; a=arm64;  TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build && TARGET=$$t ARCH=$$a ./bsys6 deb && ./bsys6 rpm )
-	( t=linux; a=i686;   TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build && TARGET=$$t ARCH=$$a ./bsys6 deb && ./bsys6 rpm )
+	( t=linux; a=x86_64; TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build && TARGET=$$t ARCH=$$a ./bsys6 deb && TARGET=$$t ARCH=$$a ./bsys6 rpm )
+	( t=linux; a=arm64;  TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build && TARGET=$$t ARCH=$$a ./bsys6 deb && TARGET=$$t ARCH=$$a ./bsys6 rpm )
+	( t=linux; a=i686;   TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build && TARGET=$$t ARCH=$$a ./bsys6 deb && TARGET=$$t ARCH=$$a ./bsys6 rpm )
 
 world-macos :
 	( t=macos; a=x86_64; TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build )
