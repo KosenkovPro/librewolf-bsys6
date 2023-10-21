@@ -47,6 +47,8 @@ help :
 	@echo "    - These will proxy ./bsys6 commands, see './bsys6 help'."
 	@echo ""
 	@echo ""
+	@echo "* Further documentation in 'tests/README.md'."
+	@echo ""
 
 world : world-linux world-macos world-windows
 
