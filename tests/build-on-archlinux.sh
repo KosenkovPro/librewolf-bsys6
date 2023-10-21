@@ -1,4 +1,4 @@
-# world-archlinux.sh
+# build-on-archlinux.sh
 
 pacman -Syu --noconfirm
 pacman -S --noconfirm make jq python3 python-pip sudo gcc
@@ -7,4 +7,3 @@ pacman -S --noconfirm make jq python3 python-pip sudo gcc
 
 cd /cwd
 make -f tests/Makefile world
-

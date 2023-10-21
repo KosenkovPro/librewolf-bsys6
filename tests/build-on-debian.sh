@@ -1,4 +1,4 @@
-# world-debian.sh
+# build-on-debian.sh
 
 apt-get -y update
 apt-get -y upgrade
