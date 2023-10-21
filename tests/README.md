@@ -13,7 +13,7 @@ The supported platforms are:
 
 #### How to target a specific OS/cpu:
 ```
-TARGET=macos ARCH=arm64 ./tests.sh
+TARGET=windows ARCH=x86_64 ./tests.sh
 ```
 #### How to get command help:
 ```
