@@ -1,4 +1,17 @@
-#### How to run a specific OS/cpu:
+#### Testing Supported build platforms:
+
+The supported platforms are:
+
+* Debian
+* Arch Linux
+* Fedora (work in progress)
+
+#### How to build for your local machine:
+```
+./tests.sh
+```
+
+#### How to target a specific OS/cpu:
 ```
 TARGET=macos ARCH=arm64 ./tests.sh
 ```
@@ -6,6 +19,11 @@ TARGET=macos ARCH=arm64 ./tests.sh
 ```
 ./tests.sh help
 ```
+#### Please read this help first before testing.
+
+##
+
+
 
 This testing folder is about building the bsys6 artifacts locally. You'll need `make`.
 
@@ -13,7 +31,7 @@ This testing folder is about building the bsys6 artifacts locally. You'll need `
 
 * `make -f tests/Makefile world-docker` will build the 7 builds thrice using temporary docker images, for: debian, archlinux, fedora.
 
-
+```
 ###
 ### IMPORTANT :
 ###
@@ -22,3 +40,4 @@ This testing folder is about building the bsys6 artifacts locally. You'll need `
 ###
 ### bsys6 also responds to a `./env.sh` file with values for the above parameters.
 ###
+```

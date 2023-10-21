@@ -15,8 +15,6 @@ build :
 	./bsys6 bootstrap
 	./bsys6 prepare
 	./bsys6 package
-	./bsys6 deb
-	./bsys6 rpm
 
 currently :
 	./bsys6 help | grep currently
