@@ -1,7 +1,7 @@
 # build-on-fedora.sh
 
 dnf -y update
-dnf -y install gcc-c++ make curl jq python3 python3-devel python3-pip wget
+dnf -y install gcc-c++ make curl jq python3 python3-devel python3-pip wget bzip2
 
 ./tests/fix-rust72.sh
 
