@@ -1,38 +1,65 @@
 #
-# Bsys6 batch commands collection, this
-# is ment for internal use only.
+# IMPORTANT :
 #
-
 #  TARGET  - The target platform (available: linux windows macos; currently: linux)
 #  ARCH    - The target architecture (available: x86_64 arm64 i686; currently: x86_64)
+#
+#
 
-PHONY_TARGETS = help currently local build world world-linux world-macos world-windows clean clobber source update bootstrap  world-archlinux world-debian world-docker
 
-
+PHONY_TARGETS = all help currently local build \
+world world-linux world-macos world-windows \
+clean clobber source update bootstrap \
+docker-world docker-archlinux docker-debian docker-fedora
 
 .PHONY : $(PHONY_TARGETS)
+
+#all : build
+all : help
+
+build :
+	${MAKE} -f tests/Makefile currently
+
+	./bsys6 clean
+	./bsys6 bootstrap
+	./bsys6 prepare
+	./bsys6 package
+	./bsys6 deb
+	./bsys6 rpm
+
+currently :
+	./bsys6 help | grep currently
 
 help :
 	@echo "Use: make $(PHONY_TARGETS)"
 	@echo ""
-	@echo "  currently     - show current bsys6 build settings."
-	@echo "  build         - For my detected / set system, run a full local build."
-	@echo "                  so, ''TARGET=macos ARCH=arm64 make build'' builds for that."
+	@echo "* Building locally:"
 	@echo ""
-	@echo "  world         - Build all architectures on all systems. (7 builds)"
+	@echo "   currently     - show current bsys6 build settings."
+	@echo "   build, all    - For my detected / set system, run a full local build."
+	@echo "                   so, ''TARGET=macos ARCH=arm64 make build'' builds for that."
 	@echo ""
-	@echo "  world-linux   - Build for linux (3 builds: x86_64 arm64 i686)"
-	@echo "  world-macos   - Build for macos (2 builds: x86_64 arm64)"
-	@echo "  world-windows - Build for windows (2 builds: x86_64 i686)"
+	@echo "   world         - Build all architectures on all systems. (7 builds)"
 	@echo ""
-	@echo " clean, clobber, source, update, bootstrap, - proxy ./bsys6 commands, see './bsys6 help'."
+	@echo "   world-linux   - Build for linux (3 builds: x86_64 arm64 i686)"
+	@echo "   world-macos   - Build for macos (2 builds: x86_64 arm64)"
+	@echo "   world-windows - Build for windows (2 builds: x86_64 i686)"
 	@echo ""
-
-
-
+	@echo "* Building using docker deamon:"
+	@echo ""
+	@echo "   docker-world     - "
+	@echo "   docker-archlinux - "
+	@echo "   docker-debian    - "
+	@echo "   docker-fedora    - "
+	@echo ""
+	@echo "* Utility commands:"
+	@echo ""
+	@echo "   clean, clobber, source, update, bootstrap:"
+	@echo "    - These will proxy ./bsys6 commands, see './bsys6 help'."
+	@echo ""
+	@echo ""
 
 world : world-linux world-macos world-windows
-
 
 world-linux :
 	( t=linux; a=x86_64; TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build && TARGET=$$t ARCH=$$a ./bsys6 deb && TARGET=$$t ARCH=$$a ./bsys6 rpm )
@@ -46,8 +73,6 @@ world-macos :
 world-windows :
 	( t=windows; a=x86_64; TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build && TARGET=$$t ARCH=$$a ./bsys6 setup msix portable nupkg )
 	( t=windows; a=i686;   TARGET=$$t ARCH=$$a ${MAKE} -f tests/Makefile build && TARGET=$$t ARCH=$$a ./bsys6 setup msix portable nupkg )
-
-
 
 
 #
@@ -71,35 +96,19 @@ bootstrap :
 	./bsys6 bootstrap
 
 
-
-
-# trivial subcommands
-currently :
-	./bsys6 help | grep currently
-
-
-build :
-	${MAKE} -f tests/Makefile currently
-
-	./bsys6 clean
-	./bsys6 bootstrap
-	./bsys6 prepare
-	./bsys6 package
-
-
-
 #
-# world-docker is probably the worst thing I can do
-# to my quad core, a total of 2*7=14 builds of LW.
+# docker-world is probably the worst thing I can do
+# to my quad core, a total of 3*7=21 builds of LW.
 #
 
-world-docker : world-archlinux world-debian
 
+docker-world : docker-archlinux docker-debian docker-fedora
 
-world-archlinux :
+docker-archlinux :
+	docker run -it --rm -v "$$(pwd):/cwd:rw" -w /cwd archlinux /bin/sh -c tests/build-on-archlinux.sh
 
-	docker run -it --rm -v "$$(pwd):/cwd:rw" -w /cwd archlinux /bin/sh -c tests/world-archlinux.sh
+docker-debian :
+	docker run -it --rm -v "$$(pwd):/cwd:rw" -w /cwd debian /bin/sh -c tests/build-on-debian.sh
 
-world-debian :
-
-	docker run -it --rm -v "$$(pwd):/cwd:rw" -w /cwd debian /bin/sh -c tests/world-debian.sh
+docker-fedora :
+	docker run -it --rm -v "$$(pwd):/cwd:rw" -w /cwd fedora /bin/sh -c tests/build-on-fedora.sh
