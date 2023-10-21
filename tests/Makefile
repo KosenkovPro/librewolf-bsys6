@@ -1,12 +1,3 @@
-#
-# IMPORTANT :
-#
-#  TARGET  - The target platform (available: linux windows macos; currently: linux)
-#  ARCH    - The target architecture (available: x86_64 arm64 i686; currently: x86_64)
-#
-#
-
-
 PHONY_TARGETS = all help currently local build \
 world world-linux world-macos world-windows \
 clean clobber source update bootstrap \
@@ -14,8 +5,8 @@ docker-world docker-archlinux docker-debian docker-fedora
 
 .PHONY : $(PHONY_TARGETS)
 
-#all : build
-all : help
+all : build
+#all : help
 
 build :
 	${MAKE} -f tests/Makefile currently
