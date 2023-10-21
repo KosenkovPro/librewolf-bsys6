@@ -1,3 +1,7 @@
+#
+# Note: This bug is present in the current build: 118.0.2, and also in 118.0.1
+#
+# reference:
 # bug: firefox-118.0.1 not building
 #      https://forums.gentoo.org/viewtopic-p-8804547.html?sid=7faad46021bc44acd6ad8493bb132d2a
 #
