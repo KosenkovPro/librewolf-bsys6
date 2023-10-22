@@ -50,14 +50,15 @@ git pull
 make dir
 cd ..
 ```
-At this point you can patch the source dir further to your liking.
+#### At this point you can patch the source dir further to your liking.
+
 And to build:
 ```
 cd bsys6
 git pull
 
-export VERSION=$(cat source/version)
-export RELEASE=$(cat source/release)
+export VERSION=$(cat ../source/version)
+export RELEASE=$(cat ../source/release)
 export SOURCEDIR=$(pwd)/../source/librewolf-$VERSION-$RELEASE
 export TARGET=windows
 export ARCH=x86_64
