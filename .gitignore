@@ -9,4 +9,4 @@
 /*.dmg
 /*.deb
 /*.rpm
-/tests-log.txt
+/tests/tests-log.txt
