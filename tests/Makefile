@@ -1,7 +1,7 @@
-PHONY_TARGETS = all help currently local build \
+PHONY_TARGETS = all help show-vars local build \
 world world-linux world-macos world-windows \
 clean clobber source update bootstrap \
-docker-world docker-archlinux docker-debian docker-fedora
+monster docker-archlinux docker-debian docker-fedora
 
 .PHONY : $(PHONY_TARGETS)
 
@@ -9,14 +9,12 @@ all : build
 #all : help
 
 build :
-	${MAKE} -f tests/Makefile currently
-
 	./bsys6 clean
 	./bsys6 bootstrap
 	./bsys6 prepare
 	./bsys6 package
 
-currently :
+show-vars :
 	./bsys6 help | grep currently
 
 help :
@@ -36,10 +34,10 @@ help :
 	@echo ""
 	@echo "* Building using docker deamon:"
 	@echo ""
-	@echo "   docker-world     - "
-	@echo "   docker-archlinux - "
-	@echo "   docker-debian    - "
-	@echo "   docker-fedora    - "
+	@echo "   monster          - Build using all the distro's below."
+	@echo "   docker-archlinux - Build 'world' on Arch Linux."
+	@echo "   docker-debian    - Build 'world' on Debian."
+	@echo "   docker-fedora    - Build 'world' on Fedora."
 	@echo ""
 	@echo "* Utility commands:"
 	@echo ""
@@ -88,12 +86,12 @@ bootstrap :
 
 
 #
-# docker-world is probably the worst thing I can do
-# to my quad core, a total of 3*7=21 builds of LW.
+# `make monster` is probably the worst thing I can do
+# to my puny quad core:)
 #
 
 
-docker-world : docker-archlinux docker-debian docker-fedora
+monster : docker-archlinux docker-debian docker-fedora
 
 docker-archlinux :
 	docker run -it --rm -v "$$(pwd):/cwd:rw" -w /cwd archlinux /bin/sh -c tests/build-on-archlinux.sh
