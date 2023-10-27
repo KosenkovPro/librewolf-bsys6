@@ -6,7 +6,7 @@ dnf -y update
 dnf -y install gcc-c++ make curl jq python3 python3-devel python3-pip wget bzip2 dpkg util-linux rpm-build rsync bzip2-devel
 
 # fix rust 1.73 problem by going back to 72
-./tests/fix-rust72.sh
+#./tests/fix-rust72.sh
 
 ## macos
 
@@ -23,4 +23,4 @@ ln -s /usr/lib64/libbz2.so.1 /usr/lib64/libbz2.so.1.0
 
 ## invoke the huge docker build
 cd /cwd
-make -f tests/Makefile world-windows
+make -f tests/Makefile world
