@@ -3,7 +3,11 @@ when:
 
 variables:
   # We need to make sure the WORKDIR and .mozbuild are carried over to the next steps
-  - &prepare-env "export WORKDIR=/woodpecker/src/codeberg.org/librewolf/bsys6/work && rm -rf ~/.mozbuild &&  MOZBUILD_STATE_PATH=/woodpecker/src/codeberg.org/librewolf/bsys6/.mozbuild"
+  - &prepare-env "export
+    WORKDIR=/woodpecker/src/codeberg.org/librewolf/bsys6/work && ln -s
+    ~/.mozbuild /woodpecker/src/codeberg.org/librewolf/bsys6/mozbuild && ls -l
+    /root && ls -l /root/.mozbuild && ls -l
+    /woodpecker/src/codeberg.org/librewolf/bsys6"
 
 steps:
   source:
@@ -36,12 +40,12 @@ steps:
       - *prepare-env
       - ./bsys6 rpm
 
-  upload:
-    image: vividboarder/drone-webdav
-    settings:
-      file: "*.{deb,rpm,tar.bz2,sha256sum}"
-      destination: https://u365813.your-storagebox.de/artifacts/${CI_BUILD_NUMBER}
-      username:
-        from_secret: WEBDAV_USER
-      password:
-        from_secret: WEBDAV_PASSWORD
+  # upload:
+  #   image: vividboarder/drone-webdav
+  #   settings:
+  #     file: "*.{deb,rpm,tar.bz2,sha256sum}"
+  #     destination: https://u365813.your-storagebox.de/artifacts/${CI_BUILD_NUMBER}
+  #     username:
+  #       from_secret: WEBDAV_USER
+  #     password:
+  #       from_secret: WEBDAV_PASSWORD
