@@ -29,7 +29,7 @@ packages_other=()
 
 upload_to_registry() {
   echo "-> Uploading $1 to GitLab package registry" >&2
-  package_url="$GL_API/packages/generic/librewolf/$FULL_VERSION/$1"
+  package_url="$GL_API/packages/generic/librewolf/$FULL_VERSION/$(basename "$1")"
   curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "$1" "$package_url" >&2
   echo >&2
   echo "$package_url"
@@ -142,9 +142,19 @@ push_nupkg() {
 }
 
 push_msix() {
+  # https://github.com/microsoft/store-submission/blob/main/src/store_apis.ts
   echo "-> Pushing $1 to the Microsoft Store"
   echo "Obtaining access token"
-  ms_access_token="$(curl -X POST https://login.microsoftonline.com/8e129239-9e0b-4c0d-ac63-792a85bcc57f/oauth2/token --header "Content-Type: application/x-www-form-urlencoded" --data "grant_type=client_credentials&client_id=cd3474b9-1bed-44e3-970c-7040dad00df7&client_secret=$MS_CLIENT_SECRET&scope=https://api.store.microsoft.com/.default" | jq -r '.access_token')"
+  ms_access_token="$(curl -X POST https://login.microsoftonline.com/8e129239-9e0b-4c0d-ac63-792a85bcc57f/oauth2/token --header "Content-Type: application/x-www-form-urlencoded" --data "grant_type=client_credentials&client_id=cd3474b9-1bed-44e3-970c-7040dad00df7&client_secret=$MS_CLIENT_SECRET&resource=https://manage.devcenter.microsoft.com" | jq -r '.access_token')"
+  echo "Creating new submission"
+  ms_application_id="9NVN9SZ8KFD7"
+  ms_submission="$(curl -X POST https://manage.devcenter.microsoft.com/v1.0/my/applications/$ms_application_id/submissions --header 'Content-Type: application/json' --header "Authorization: Bearer $ms_access_token")"
+  ms_submission_id="$(echo "$ms_submission" | jq -r '.id')"
+  ms_file_upload_url="$(echo "$ms_submission" | jq -r '.fileUploadUrl')"
+  echo "Uploading $1"
+  $BSYS6/utils/upload_to_azure.py "$ms_file_upload_url" "$1"
+  echo "Commiting submission"
+  curl -X POST https://manage.devcenter.microsoft.com/v1.0/my/applications/$ms_application_id/submissions/$ms_submission/commit --header "Authorization: Bearer $ms_access_token"
 }
 
 gh_request() {
@@ -208,7 +218,7 @@ submit_winget() {
   echo "-> Sumbitting $1 as a pull request to winget-pkgs"
   wingetdir="$CLONEDIR/manifests/l/LibreWolf/LibreWolf/$FULL_VERSION"
   mkdir "$wingetdir"
-  export WINGET_FILE="$GL_API/packages/generic/librewolf/$FULL_VERSION/$1"
+  export WINGET_FILE="$GL_API/packages/generic/librewolf/$FULL_VERSION/$(basename "$1")"
   export WINGET_CHECKSUM="$(cat "${1}.sha256sum")"
   envsubst '$FULL_VERSION $WINGET_FILE $WINGET_CHECKSUM' \
     <"$BSYS6/../assets/winget/LibreWolf.LibreWolf.installer.yaml.in" \
@@ -222,7 +232,7 @@ submit_winget() {
   gh_submit_pr "microsoft" "winget-pkgs" "Update LibreWolf.LibreWolf to v$FULL_VERSION"
 }
 
-for file in $(find -name "*.exe" -o -name "*.zip" -o -name "*.tar.bz2" -o -name "*.msix" -o -name "*.dmg"); do
+for file in $(find -name "*.exe" -o -name "*.zip" -o -name "*.tar.bz2" -o -name "*.msix" -o -name "*.dmg" -o -name "*.deb" -o -name "*.rpm"); do
   upload_asset "$file"
 done
 
