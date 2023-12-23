@@ -1,46 +1,36 @@
 when:
   evaluate: |
     CI_PIPELINE_EVENT in ["manual"]
-    and WORKFLOW in ["", "build"]
 
-variables:
-  # We need to make sure the WORKDIR and .mozbuild are carried over to the next steps
-  - &prepare-env "export
-    WORKDIR=/woodpecker/src/codeberg.org/librewolf/bsys6/work && ln -s
-    ~/.mozbuild /woodpecker/src/codeberg.org/librewolf/bsys6/mozbuild && ls -l
-    /root && ls -l /root/.mozbuild && ls -l
-    /woodpecker/src/codeberg.org/librewolf/bsys6"
+workspace:
+  base: /woodpecker
+  path: src/codeberg.org/librewolf/bsys6
 
 steps:
   source:
-    image: registry.gitlab.com/librewolf-community/browser/bsys6/linux:latest
+    image: codeberg.org/librewolf/bsys6/linux:latest
     commands:
-      - *prepare-env
-      - ./bsys6 source
+      - WORKDIR=/woodpecker/work ./bsys6 source
 
   build:
-    image: registry.gitlab.com/librewolf-community/browser/bsys6/linux:latest
+    image: codeberg.org/librewolf/bsys6/linux:latest
     commands:
-      - *prepare-env
-      - ./bsys6 build
+      - WORKDIR=/woodpecker/work ./bsys6 build
 
   package:
-    image: registry.gitlab.com/librewolf-community/browser/bsys6/linux:latest
+    image: codeberg.org/librewolf/bsys6/linux:latest
     commands:
-      - *prepare-env
-      - ./bsys6 package
+      - WORKDIR=/woodpecker/work ./bsys6 package
 
   deb:
-    image: registry.gitlab.com/librewolf-community/browser/bsys6/linux:latest
+    image: codeberg.org/librewolf/bsys6/linux:latest
     commands:
-      - *prepare-env
-      - ./bsys6 deb
+      - WORKDIR=/woodpecker/work ./bsys6 deb
 
   rpm:
-    image: registry.gitlab.com/librewolf-community/browser/bsys6/linux:latest
+    image: codeberg.org/librewolf/bsys6/linux:latest
     commands:
-      - *prepare-env
-      - ./bsys6 rpm
+      - WORKDIR=/woodpecker/work ./bsys6 rpm
 
   # upload:
   #   image: vividboarder/drone-webdav

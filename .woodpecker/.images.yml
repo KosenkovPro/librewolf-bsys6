@@ -1,7 +1,11 @@
 when:
   evaluate: |
     CI_PIPELINE_EVENT in ["manual"]
-    and WORKFLOW in ["images"]
+    and (WORKFLOW == "images")
+
+# workspace:
+#   base: /root
+#   path: src/codeberg.org/librewolf/bsys6
 
 matrix:
   TARGET:
@@ -12,14 +16,15 @@ matrix:
 
 steps:
   login:
-    image: registry.gitlab.com/librewolf-community/browser/bsys6/dind
+    image: codeberg.org/librewolf/bsys6/dind
+    secrets: [codeberg_user, codeberg_access_token]
     commands:
       - docker login -u $CODEBERG_USER -p $CODEBERG_ACCESS_TOKEN codeberg.org
-  build:
-    image: registry.gitlab.com/librewolf-community/browser/bsys6/dind
+  build-and-push:
+    image: codeberg.org/librewolf/bsys6/dind
+    privileged: true
     commands:
+      - dockerd --exec-root /root/docker & sleep 1
       - ./bsys6 build_image
-  push:
-    image: registry.gitlab.com/librewolf-community/browser/bsys6/dind
-    commands:
       - docker push codeberg.org/librewolf/bsys6/$TARGET:latest
+      - killall -INT dockerd && sleep 1
