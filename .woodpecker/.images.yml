@@ -1,0 +1,23 @@
+when:
+  event: manual
+
+matrix:
+  TARGET:
+    - dind
+    - linux
+    - macos
+    - windows
+
+steps:
+  login:
+    image: registry.gitlab.com/librewolf-community/browser/bsys6/dind
+    commands:
+      - docker login -u $CODEBERG_USER -p $CODEBERG_ACCESS_TOKEN codeberg.org
+  build:
+    image: registry.gitlab.com/librewolf-community/browser/bsys6/dind
+    commands:
+      - ./bsys6 build_image
+  push:
+    image: registry.gitlab.com/librewolf-community/browser/bsys6/dind
+    commands:
+      - docker push codeberg.org/librewolf/bsys6/$TARGET:latest
