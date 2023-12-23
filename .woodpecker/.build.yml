@@ -1,5 +1,7 @@
 when:
-  event: manual
+  evaluate: |
+    CI_PIPELINE_EVENT in ["manual"]
+    and WORKFLOW in ["", "build"]
 
 variables:
   # We need to make sure the WORKDIR and .mozbuild are carried over to the next steps

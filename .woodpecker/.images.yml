@@ -1,5 +1,7 @@
 when:
-  event: manual
+  evaluate: |
+    CI_PIPELINE_EVENT in ["manual"]
+    and WORKFLOW in ["images"]
 
 matrix:
   TARGET:
