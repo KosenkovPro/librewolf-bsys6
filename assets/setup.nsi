@@ -18,6 +18,7 @@ OutFile "${PROGNAME}-${PROG_VERSION}.en-US.win64-setup.exe"
 InstallDirRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANYNAME} ${APPNAME}" "InstallLocation"
 InstallDir $PROGRAMFILES64\${APPNAME}
 RequestExecutionLevel admin
+ManifestDPIAware true
 
 # Pages
 
@@ -46,118 +47,136 @@ Click Next to continue."
 
 !insertmacro MUI_LANGUAGE "English"
 
-Section "LibreWolf Browser" main
-  SectionIn RO
+SectionGroup /e "LibreWolf Browser" maingroup
+	Section "System installation" main
+		SectionIn RO
 
-	# Make sure LibreWolf is closed before the installation
-	nsProcess::_FindProcess "${EXECUTABLE}"
-	Pop $R0
-	${If} $R0 = 0
-		IfSilent 0 +4
-		DetailPrint "${APPNAME} is still running, aborting because of silent install."
-		SetErrorlevel 2
-		Abort
-
-		DetailPrint "${APPNAME} is still running"
-		MessageBox MB_OKCANCEL "LibreWolf is still running and has to be closed for the setup to continue." IDOK continue IDCANCEL break
-break:
-		SetErrorlevel 1
-		Abort
-continue:
-		DetailPrint "Closing ${APPNAME} gracefully..."
-		nsProcess::_CloseProcess "${EXECUTABLE}"
-		Pop $R0
-		Sleep 2000
+		# Make sure LibreWolf is closed before the installation
 		nsProcess::_FindProcess "${EXECUTABLE}"
 		Pop $R0
 		${If} $R0 = 0
-			DetailPrint "Failed to close ${APPNAME}, killing it..."
-			nsProcess::_KillProcess "${EXECUTABLE}"
+			IfSilent 0 +4
+			DetailPrint "${APPNAME} is still running, aborting because of silent install."
+			SetErrorlevel 2
+			Abort
+
+			DetailPrint "${APPNAME} is still running"
+			MessageBox MB_OKCANCEL "LibreWolf is still running and has to be closed for the setup to continue." IDOK continue IDCANCEL break
+	break:
+			SetErrorlevel 1
+			Abort
+	continue:
+			DetailPrint "Closing ${APPNAME} gracefully..."
+			nsProcess::_CloseProcess "${EXECUTABLE}"
+			Pop $R0
 			Sleep 2000
 			nsProcess::_FindProcess "${EXECUTABLE}"
 			Pop $R0
 			${If} $R0 = 0
-				DetailPrint "Failed to kill ${APPNAME}, aborting"
-				MessageBox MB_ICONSTOP "LibreWolf is still running and can't be closed by the installer. Please close it manually and try again."
-				SetErrorlevel 2
-				Abort
+				DetailPrint "Failed to close ${APPNAME}, killing it..."
+				nsProcess::_KillProcess "${EXECUTABLE}"
+				Sleep 2000
+				nsProcess::_FindProcess "${EXECUTABLE}"
+				Pop $R0
+				${If} $R0 = 0
+					DetailPrint "Failed to kill ${APPNAME}, aborting"
+					MessageBox MB_ICONSTOP "LibreWolf is still running and can't be closed by the installer. Please close it manually and try again."
+					SetErrorlevel 2
+					Abort
+				${EndIf}
 			${EndIf}
 		${EndIf}
-	${EndIf}
 
-	# Install Visual C++ Redistributable (only if not silent)
-	IfSilent +4 0
-	InitPluginsDir
-	File /oname=$PLUGINSDIR\vc_redist.x64.exe vc_redist.x64.exe
-	ExecWait "$PLUGINSDIR\vc_redist.x64.exe /install /quiet /norestart"
+		# Install Visual C++ Redistributable (only if not silent)
+		IfSilent +4 0
+		InitPluginsDir
+		File /oname=$PLUGINSDIR\vc_redist.x64.exe vc_redist.x64.exe
+		ExecWait "$PLUGINSDIR\vc_redist.x64.exe /install /quiet /norestart"
 
-	# Copy files
-	SetOutPath $INSTDIR
-	File /r LibreWolf\*.*
+		# Copy files
+		SetOutPath $INSTDIR
+		File /r LibreWolf\*.*
 
-	# Start Menu
-	RMDir /r "$SMPROGRAMS\${COMPANYNAME}" ; Previously those files were stored for the user, we don't want double entries
-	SetShellVarContext all
-	CreateDirectory "$SMPROGRAMS\${COMPANYNAME}"
-	CreateShortCut "$SMPROGRAMS\${COMPANYNAME}\${APPNAME}.lnk" "$INSTDIR\${PROGNAME}.exe" "" "$INSTDIR\${MUI_ICON}"
-	CreateShortCut "$SMPROGRAMS\${COMPANYNAME}\Uninstall.lnk" "$INSTDIR\uninstall.exe" "" ""
+		# Start Menu
+		RMDir /r "$SMPROGRAMS\${COMPANYNAME}" ; Previously those files were stored for the user, we don't want double entries
+		SetShellVarContext all
+		CreateDirectory "$SMPROGRAMS\${COMPANYNAME}"
+		CreateShortCut "$SMPROGRAMS\${COMPANYNAME}\${APPNAME}.lnk" "$INSTDIR\${PROGNAME}.exe" "" "$INSTDIR\${MUI_ICON}"
+		CreateShortCut "$SMPROGRAMS\${COMPANYNAME}\Uninstall.lnk" "$INSTDIR\uninstall.exe" "" ""
 
-	# Uninstaller 
-	writeUninstaller "$INSTDIR\uninstall.exe"
+		# Uninstaller 
+		writeUninstaller "$INSTDIR\uninstall.exe"
 
-	# Registry information for add/remove programs
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANYNAME} ${APPNAME}" "DisplayName" "${APPNAME}"
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANYNAME} ${APPNAME}" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANYNAME} ${APPNAME}" "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANYNAME} ${APPNAME}" "InstallLocation" "$\"$INSTDIR$\""
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANYNAME} ${APPNAME}" "DisplayIcon" "$\"$INSTDIR\${MUI_ICON}$\""
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANYNAME} ${APPNAME}" "Publisher" "${COMPANYNAME}"
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANYNAME} ${APPNAME}" "DisplayVersion" "${PROG_VERSION}"
-	# There is no option for modifying or repairing the install
-	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANYNAME} ${APPNAME}" "NoModify" 1
-	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANYNAME} ${APPNAME}" "NoRepair" 1
-	# Set the INSTALLSIZE constant (!defined at the top of this script) so Add/Remove Programs can accurately report the size
-	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANYNAME} ${APPNAME}" "EstimatedSize" ${ESTIMATED_SIZE}
+		# Registry information for add/remove programs
+		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANYNAME} ${APPNAME}" "DisplayName" "${APPNAME}"
+		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANYNAME} ${APPNAME}" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
+		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANYNAME} ${APPNAME}" "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
+		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANYNAME} ${APPNAME}" "InstallLocation" "$\"$INSTDIR$\""
+		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANYNAME} ${APPNAME}" "DisplayIcon" "$\"$INSTDIR\${MUI_ICON}$\""
+		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANYNAME} ${APPNAME}" "Publisher" "${COMPANYNAME}"
+		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANYNAME} ${APPNAME}" "DisplayVersion" "${PROG_VERSION}"
+		# There is no option for modifying or repairing the install
+		WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANYNAME} ${APPNAME}" "NoModify" 1
+		WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANYNAME} ${APPNAME}" "NoRepair" 1
+		# Set the INSTALLSIZE constant (!defined at the top of this script) so Add/Remove Programs can accurately report the size
+		WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANYNAME} ${APPNAME}" "EstimatedSize" ${ESTIMATED_SIZE}
 
 
-	#
-	# Registry information to let Windows pick us up in the list of available browsers
-	#
-	
-	WriteRegStr HKLM "Software\Clients\StartMenuInternet\LibreWolf" "" "LibreWolf"	
+		#
+		# Registry information to let Windows pick us up in the list of available browsers
+		#
+		
+		WriteRegStr HKLM "Software\Clients\StartMenuInternet\LibreWolf" "" "LibreWolf"	
 
-	WriteRegStr HKLM "Software\Clients\StartMenuInternet\LibreWolf\Capabilities" "ApplicationDescription" "LibreWolf"
-	WriteRegStr HKLM "Software\Clients\StartMenuInternet\LibreWolf\Capabilities" "ApplicationIcon" "$INSTDIR\librewolf.exe,0"
-	WriteRegStr HKLM "Software\Clients\StartMenuInternet\LibreWolf\Capabilities" "ApplicationName" "LibreWolf"
-	WriteRegStr HKLM "Software\Clients\StartMenuInternet\LibreWolf\Capabilities\FileAssociations" ".htm" "LibreWolfHTM"
-	WriteRegStr HKLM "Software\Clients\StartMenuInternet\LibreWolf\Capabilities\FileAssociations" ".html" "LibreWolfHTM"
-	WriteRegStr HKLM "Software\Clients\StartMenuInternet\LibreWolf\Capabilities\FileAssociations" ".pdf" "LibreWolfHTM"
-	WriteRegStr HKLM "Software\Clients\StartMenuInternet\LibreWolf\Capabilities\Startmenu" "StartMenuInternet" "LibreWolf"
-	WriteRegStr HKLM "Software\Clients\StartMenuInternet\LibreWolf\Capabilities\URLAssociations" "http" "LibreWolfHTM"
-	WriteRegStr HKLM "Software\Clients\StartMenuInternet\LibreWolf\Capabilities\URLAssociations" "https" "LibreWolfHTM"
+		WriteRegStr HKLM "Software\Clients\StartMenuInternet\LibreWolf\Capabilities" "ApplicationDescription" "LibreWolf"
+		WriteRegStr HKLM "Software\Clients\StartMenuInternet\LibreWolf\Capabilities" "ApplicationIcon" "$INSTDIR\librewolf.exe,0"
+		WriteRegStr HKLM "Software\Clients\StartMenuInternet\LibreWolf\Capabilities" "ApplicationName" "LibreWolf"
+		WriteRegStr HKLM "Software\Clients\StartMenuInternet\LibreWolf\Capabilities\FileAssociations" ".htm" "LibreWolfHTM"
+		WriteRegStr HKLM "Software\Clients\StartMenuInternet\LibreWolf\Capabilities\FileAssociations" ".html" "LibreWolfHTM"
+		WriteRegStr HKLM "Software\Clients\StartMenuInternet\LibreWolf\Capabilities\FileAssociations" ".pdf" "LibreWolfHTM"
+		WriteRegStr HKLM "Software\Clients\StartMenuInternet\LibreWolf\Capabilities\Startmenu" "StartMenuInternet" "LibreWolf"
+		WriteRegStr HKLM "Software\Clients\StartMenuInternet\LibreWolf\Capabilities\URLAssociations" "http" "LibreWolfHTM"
+		WriteRegStr HKLM "Software\Clients\StartMenuInternet\LibreWolf\Capabilities\URLAssociations" "https" "LibreWolfHTM"
 
-	WriteRegStr HKLM "Software\Clients\StartMenuInternet\LibreWolf\DefaultIcon" "" "$INSTDIR\librewolf.exe,0"
-	WriteRegStr HKLM "Software\Clients\StartMenuInternet\LibreWolf\shell\open\command" "" "$INSTDIR\librewolf.exe"
-	
-	WriteRegStr HKLM "Software\RegisteredApplications" "LibreWolf" "Software\Clients\StartMenuInternet\LibreWolf\Capabilities"
-	
-	WriteRegStr HKLM "Software\Classes\LibreWolfHTM" "" "LibreWolf Handler"
-	WriteRegStr HKLM "Software\Classes\LibreWolfHTM" "AppUserModelId" "LibreWolf"
-	WriteRegStr HKLM "Software\Classes\LibreWolfHTM\Application" "AppUserModelId" "LibreWolf"
-	WriteRegStr HKLM "Software\Classes\LibreWolfHTM\Application" "ApplicationIcon" "$INSTDIR\librewolf.exe,0"
-	WriteRegStr HKLM "Software\Classes\LibreWolfHTM\Application" "ApplicationName" "LibreWolf"
-	WriteRegStr HKLM "Software\Classes\LibreWolfHTM\Application" "ApplicationDescription" "Start the LibreWolf Browser"
-	WriteRegStr HKLM "Software\Classes\LibreWolfHTM\Application" "ApplicationCompany" "LibreWolf Community"
-	WriteRegStr HKLM "Software\Classes\LibreWolfHTM\DefaultIcon" "" "$INSTDIR\librewolf.exe,0"
-	WriteRegStr HKLM "Software\Classes\LibreWolfHTM\shell\open\command" "" "$\"$INSTDIR\librewolf.exe$\" -osint -url $\"%1$\""
-SectionEnd
+		WriteRegStr HKLM "Software\Clients\StartMenuInternet\LibreWolf\DefaultIcon" "" "$INSTDIR\librewolf.exe,0"
+		WriteRegStr HKLM "Software\Clients\StartMenuInternet\LibreWolf\shell\open\command" "" "$INSTDIR\librewolf.exe"
+		
+		WriteRegStr HKLM "Software\RegisteredApplications" "LibreWolf" "Software\Clients\StartMenuInternet\LibreWolf\Capabilities"
+		
+		WriteRegStr HKLM "Software\Classes\LibreWolfHTM" "" "LibreWolf Handler"
+		WriteRegStr HKLM "Software\Classes\LibreWolfHTM" "AppUserModelId" "LibreWolf"
+		WriteRegStr HKLM "Software\Classes\LibreWolfHTM\Application" "AppUserModelId" "LibreWolf"
+		WriteRegStr HKLM "Software\Classes\LibreWolfHTM\Application" "ApplicationIcon" "$INSTDIR\librewolf.exe,0"
+		WriteRegStr HKLM "Software\Classes\LibreWolfHTM\Application" "ApplicationName" "LibreWolf"
+		WriteRegStr HKLM "Software\Classes\LibreWolfHTM\Application" "ApplicationDescription" "Start the LibreWolf Browser"
+		WriteRegStr HKLM "Software\Classes\LibreWolfHTM\Application" "ApplicationCompany" "LibreWolf Community"
+		WriteRegStr HKLM "Software\Classes\LibreWolfHTM\DefaultIcon" "" "$INSTDIR\librewolf.exe,0"
+		WriteRegStr HKLM "Software\Classes\LibreWolfHTM\shell\open\command" "" "$\"$INSTDIR\librewolf.exe$\" -osint -url $\"%1$\""
+	SectionEnd
 
-Section /o "LibreWolf WinUpdater" winupdater
-	File LibreWolf-WinUpdater.exe
-	File ScheduledTask-Create.ps1
-	File ScheduledTask-Remove.ps1
-	CreateShortCut "$SMPROGRAMS\${COMPANYNAME}\LibreWolf WinUpdater.lnk" "$INSTDIR\LibreWolf-WinUpdater.exe" "" "$INSTDIR\LibreWolf-WinUpdater.exe"
-SectionEnd
+	Section /o "Portable installation" portable
+		SetOutPath $INSTDIR
+		File /r LibreWolf
+		File LibreWolf-Portable.exe
+	SectionEnd
+SectionGroupEnd
+
+SectionGroup /e "LibreWolf WinUpdater" winupdatergroup
+	Section "Install WinUpdater" winupdater
+		File LibreWolf-WinUpdater.exe
+		${IfNot} ${SectionIsSelected} ${portable}
+			File ScheduledTask-Create.ps1
+			File ScheduledTask-Remove.ps1
+			CreateShortCut "$SMPROGRAMS\${COMPANYNAME}\LibreWolf WinUpdater.lnk" "$INSTDIR\LibreWolf-WinUpdater.exe" "" "$INSTDIR\LibreWolf-WinUpdater.exe"
+		${EndIf}
+	SectionEnd
+
+	Section "Automatically schedule updates" scheduledtask
+		; SetShellVarContext current
+		ExecWait "$INSTDIR\LibreWolf-WinUpdater.exe /CreateTask"
+		; SetShellVarContext all
+	SectionEnd
+SectionGroupEnd
 
 # Uninstaller
 section "Uninstall"
@@ -214,7 +233,10 @@ sectionEnd
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
   !insertmacro MUI_DESCRIPTION_TEXT ${main} "Install the browser for all users"
+  !insertmacro MUI_DESCRIPTION_TEXT ${portable} "Extract the browser to a folder or removable storage device for portable use"
+  !insertmacro MUI_DESCRIPTION_TEXT ${winupdatergroup} "A companion tool to update LibreWolf with a single click"
   !insertmacro MUI_DESCRIPTION_TEXT ${winupdater} "A companion tool to update LibreWolf with a single click"
+  !insertmacro MUI_DESCRIPTION_TEXT ${scheduledtask} "Adds Windows scheduled task to automatically update LibreWolf at log on and every 4 hours"
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 
@@ -223,16 +245,50 @@ Function .onInit
 	Var /GLOBAL INSTALL_TYPE
 	StrCpy $DEFAULT_INSTDIR $INSTDIR
 	StrCpy $INSTALL_TYPE "normal"
+
 	SetShellVarContext current
 	IfFileExists "$SMPROGRAMS\${COMPANYNAME}\LibreWolf WinUpdater.lnk" +3 +1
 	SetShellVarContext all
 	IfFileExists "$INSTDIR\LibreWolf-WinUpdater.exe" +1 +2
-	SectionSetFlags ${winupdater} ${SF_SELECTED}
+	SectionSetFlags ${maingroup} 114 ; SF_SECGRP & SF_RO & SF_EXPAND & SF_PSELECTED
 	SetShellVarContext all
 FunctionEnd
 
+Function .onSelChange
+	${If} ${SectionIsSelected} ${main}
+	${AndIf} $0 = ${main}
+		StrCpy $INSTDIR $DEFAULT_INSTDIR
+		StrCpy $INSTALL_TYPE "normal"
+		SectionSetFlags ${portable} 0
+		SectionSetFlags ${main} 17 ; SF_SELECTED & SF_RO
+		SectionSetFlags ${winupdater} ${SF_SELECTED}
+		SectionSetFlags ${scheduledtask} ${SF_SELECTED}
+	${EndIf}
+	${If} ${SectionIsSelected} ${portable}
+	${AndIf} $0 = ${portable}
+		StrCpy $INSTDIR "$DESKTOP\LibreWolf Portable"
+		StrCpy $INSTALL_TYPE "portable"
+		SectionSetFlags ${portable} 17 ; SF_SELECTED & SF_RO
+		SectionSetFlags ${main} 0
+		SectionSetFlags ${winupdater} ${SF_SELECTED}
+		SectionSetFlags ${scheduledtask} ${SF_RO}
+	${EndIf}
+	${IfNot} ${SectionIsSelected} ${winupdater}
+	${AndIfNot} ${SectionIsSelected} ${portable}
+	${AndIf} $0 = ${winupdater}
+		SectionSetFlags ${scheduledtask} 0
+	${EndIf}
+	${If} ${SectionIsSelected} ${scheduledtask}
+	${AndIf} $0 = ${scheduledtask}
+		SectionSetFlags ${winupdater} ${SF_SELECTED}
+	${EndIf}
+FunctionEnd
 
 Function "CreateDesktopShortcut"
 	SetShellVarContext all
-	CreateShortCut "$DESKTOP\LibreWolf.lnk" "$INSTDIR\librewolf.exe" "" "$INSTDIR\librewolf.exe" 0
+	${If} ${SectionIsSelected} ${portable}
+		CreateShortCut "$DESKTOP\LibreWolf.lnk" "$INSTDIR\LibreWolf-Portable.exe" "" "$INSTDIR\LibreWolf\librewolf.ico" 0
+	${Else}
+		CreateShortCut "$DESKTOP\LibreWolf.lnk" "$INSTDIR\librewolf.exe" "" "$INSTDIR\librewolf.exe" 0
+	${EndIf}
 FunctionEnd
