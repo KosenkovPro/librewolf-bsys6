@@ -24,6 +24,9 @@ if [ -z "${SOURCE:-}" ]; then
       mv "$SOURCEDIR/../librewolf-$VERSION" "$SOURCEDIR" >&2
     fi
 
+    # Temporary hotfix to get docker images built
+    patch -p1 -d "$SOURCEDIR" <"$BSYS6/../assets/always-fetch-latest-toolchain-artifact.patch" >&2
+
     if [[ $SOURCE_TAR == $WORKDIR* ]]; then
       echo "-> Cleaning up source tarball" >&2
       rm "$SOURCE_TAR" >&2
