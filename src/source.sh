@@ -88,7 +88,7 @@ EOF
       mozconfig="$(
         cat <<EOF
 $mozconfig
-ac_add_options --enable-lto=full,cross
+ac_add_options --enable-lto=full
 EOF
       )"
     else
