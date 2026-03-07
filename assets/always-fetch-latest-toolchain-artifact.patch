@@ -34,3 +34,41 @@ index 5fbdd8d..1ae96b2 100644
              if task_id in (True, False) or not artifact_name:
                  command_context.log(
                      logging.ERROR,
+diff --git a/build/moz.configure/toolchain.configure b/build/moz.configure/toolchain.configure
+index c443705..58716a5 100644
+--- a/build/moz.configure/toolchain.configure
++++ b/build/moz.configure/toolchain.configure
+@@ -2185,28 +2185,28 @@ using_msvc_stl = depends(cxx_compiler)(lambda c: c.type == "clang-cl")
+ 
+ using_msvc_stl_202503_or_newer = try_compile(
+     language="C++",
+-    includes=["new"],
++    includes=["version"],
+     body="#if !defined(_MSVC_STL_UPDATE) || _MSVC_STL_UPDATE < 202503L\n#error 1\n#endif",
+     when=using_msvc_stl,
+ )
+ 
+ using_libstdcxx = try_compile(
+     language="C++",
+-    includes=["new"],
++    includes=["version"],
+     body="#ifndef __GLIBCXX__\n#error 1\n#endif",
+     when=~using_msvc_stl,
+ )
+ 
+ using_libcxx = try_compile(
+     language="C++",
+-    includes=["new"],
++    includes=["version"],
+     body="#ifndef _LIBCPP_VERSION\n#error 1\n#endif",
+     when=~using_libstdcxx,
+ )
+ 
+ using_libcxx_19_or_newer = try_compile(
+     language="C++",
+-    includes=["new"],
++    includes=["version"],
+     body="#if _LIBCPP_VERSION < 190000\n#error 1\n#endif",
+     when=using_libcxx,
+ )
+ 
