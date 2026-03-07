@@ -74,7 +74,7 @@ EOF
   fi
 
   # Use system widl for arm64 Windows builds
-  if [[ $TARGET == "windows" ]]; then
+  if [[ $TARGET == "windows" && "${ARCH:-}" == "arm64" ]]; then
     mozconfig="$(
       cat <<EOF
 $mozconfig
