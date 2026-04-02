@@ -2,21 +2,15 @@
 set -eu
 
 source $BSYS6/exports/require_target.sh windows
-source $BSYS6/exports/require_artifact.sh package
 source $BSYS6/exports/require_artifact.sh winupdater
 $BSYS6/utils/require_command.sh "jq" "zip" "unzip" "wget"
 
 echo "-> Building portable zip" >&2
-tmpdir="$(mktemp -d)"
 
 cd $tmpdir
 mkdir -p librewolf-$VERSION/Profiles/Default
-mkdir -p librewolf-$VERSION/LibreWolf
+mv LibreWolf librewolf-$VERSION/LibreWolf
 
-cd librewolf-$VERSION/LibreWolf
-unzip -q $PACKAGE
-mv librewolf/* .
-rmdir librewolf
 $BSYS6/utils/vc_redist.sh
 cd ..
 
@@ -38,3 +32,6 @@ esac
 zip -r9 librewolf-$VERSION.en-US.$win_arch_suffix-portable.zip librewolf-$VERSION
 
 source $BSYS6/exports/move_artifact.sh "PORTABLE" "$tmpdir" "librewolf-.*\.zip"
+
+rm -rf "$tmpdir"
+unset TMPDIR
