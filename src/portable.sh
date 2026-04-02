@@ -11,8 +11,7 @@ cd $tmpdir
 mkdir -p librewolf-$VERSION/Profiles/Default
 mv LibreWolf librewolf-$VERSION/LibreWolf
 
-$BSYS6/utils/vc_redist.sh
-cd ..
+cd librewolf-$VERSION
 
 # ahk-tools by @ltguillaume
 $BSYS6/utils/download_codeberg.sh "librewolf/librewolf-portable" 'LibreWolf-Portable_[.\\d]+\\.zip$' "LibreWolf-Portable.zip"
