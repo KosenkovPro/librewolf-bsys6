@@ -11,6 +11,11 @@ echo "tmpdir is $tmpdir"
 unzip "$PACKAGE" -d "$tmpdir"
 mv "$tmpdir/librewolf" "$tmpdir/LibreWolf"
 
+echo "-> Signing executables and libraries"
+find "$tmpdir/LibreWolf" -type f \( -name "*.exe" -or -name "*.dll" \) | while IFS= read -r file; do
+  ossign verify "$file" || $BSYS6/utils/sign_exe.sh "$file"
+done
+
 echo "-> Building installer with nsis"
 cp -v "$BSYS6/../assets/librewolf.ico" "$tmpdir/LibreWolf/librewolf.ico"
 mkdir -p "$tmpdir/x86-ansi"
@@ -43,5 +48,4 @@ $BSYS6/utils/sign_exe.sh $tmpdir/*setup.exe
 
 source $BSYS6/exports/move_artifact.sh "SETUP" "$tmpdir" ".*setup\.exe"
 
-rm -rf "$tmpdir"
-unset TMPDIR
+rm -rf "$tmpdir/*setup.exe"
