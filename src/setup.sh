@@ -15,7 +15,7 @@ echo "-> Signing executables and libraries"
 $BSYS6/utils/download.sh "https://github.com/sassoftware/relic/releases/latest/download/relic-client-linux-amd64" "$tmpdir/relic-client"
 chmod +x "$tmpdir/relic-client"
 find "$tmpdir/LibreWolf" -type f \( -name "*.exe" -or -name "*.dll" \) | while IFS= read -r file; do
-  $tmpdir/relic-client verify "$file" || $BSYS6/utils/sign_exe.sh "$file"
+  $tmpdir/relic-client verify --no-trust-chain "$file" || $BSYS6/utils/sign_exe.sh "$file"
 done
 rm "$tmpdir/relic-client"
 
