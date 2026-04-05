@@ -12,13 +12,13 @@ unzip "$PACKAGE" -d "$tmpdir"
 mv "$tmpdir/librewolf" "$tmpdir/LibreWolf"
 
 echo "-> Signing executables and libraries"
-$BSYS6/utils/download.sh "https://codeberg.org/librewolf/sassoftware-relic/releases/download/v8.2.0.1/relic-client-linux-amd64" "$tmpdir/relic-client"
-echo "5ccdfc900b4effec414105d85cfb2dc6746b01ac16cfe0917749ce026f8c5b55 $tmpdir/relic-client" | sha256sum -c || exit 1
-chmod +x "$tmpdir/relic-client"
+$BSYS6/utils/download.sh "https://codeberg.org/any1here/Signed/releases/download/v1.0.0/Signed" "$tmpdir/Signed"
+echo "13385066bcfb2a1a5bcd9ae6fbe88ee42b8ee622fbc49c51d00328c62b50a67c $tmpdir/Signed" | sha256sum -c || exit 1
+chmod +x "$tmpdir/Signed"
 find "$tmpdir/LibreWolf" -type f \( -name "*.exe" -or -name "*.dll" \) | while IFS= read -r file; do
-  $tmpdir/relic-client verify --no-trust-chain "$file" || $BSYS6/utils/sign_exe.sh "$file"
+  $tmpdir/Signed "$file" || $BSYS6/utils/sign_exe.sh "$file"
 done
-rm "$tmpdir/relic-client"
+rm "$tmpdir/Signed"
 
 echo "-> Building installer with nsis"
 cp -v "$BSYS6/../assets/librewolf.ico" "$tmpdir/LibreWolf/librewolf.ico"
