@@ -12,7 +12,8 @@ unzip "$PACKAGE" -d "$tmpdir"
 mv "$tmpdir/librewolf" "$tmpdir/LibreWolf"
 
 echo "-> Signing executables and libraries"
-$BSYS6/utils/download.sh "https://github.com/sassoftware/relic/releases/latest/download/relic-client-linux-amd64" "$tmpdir/relic-client"
+$BSYS6/utils/download.sh "https://codeberg.org/librewolf/sassoftware-relic/releases/download/v8.2.0.1/relic-client-linux-amd64" "$tmpdir/relic-client"
+echo "5ccdfc900b4effec414105d85cfb2dc6746b01ac16cfe0917749ce026f8c5b55 $tmpdir/relic-client" | sha256sum -c || exit 1
 chmod +x "$tmpdir/relic-client"
 find "$tmpdir/LibreWolf" -type f \( -name "*.exe" -or -name "*.dll" \) | while IFS= read -r file; do
   $tmpdir/relic-client verify --no-trust-chain "$file" || $BSYS6/utils/sign_exe.sh "$file"
