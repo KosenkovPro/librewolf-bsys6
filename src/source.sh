@@ -66,16 +66,6 @@ EOF
     )"
   fi
 
-  # Use system widl for arm64 Windows builds
-  if [[ $TARGET == "windows" && "${ARCH:-}" == "arm64" ]]; then
-    mozconfig="$(
-      cat <<EOF
-$mozconfig
-export MIDL="$(which widl)"
-EOF
-    )"
-  fi
-
   if [[ "${LTO:-false}" == "true" ]]; then
     if [[ $TARGET == "windows" ]]; then
       mozconfig="$(
