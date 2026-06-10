@@ -29,6 +29,10 @@ if [ -z "${SOURCE:-}" ]; then
       rm "$SOURCE_TAR" >&2
     fi
 
+    # Add support for aarch64 targets
+    if [ "${TARGET:-}" == "windows" ] && [ "${ARCH:-}" == "arm64" ]; then
+      sed -i '/"x86_64": \["--win64", "-m64"\],/a\        "aarch64": ["--win64", "-m64"],' "$SOURCEDIR/toolkit/moz.configure"
+    fi
   fi
 
   if [ ! -f "$SOURCEDIR/mozconfig.backup" ]; then
@@ -65,6 +69,7 @@ export NASM="\$MOZBUILD/nasm/nasm"
 EOF
     )"
   fi
+
 
   if [[ "${LTO:-false}" == "true" ]]; then
     if [[ $TARGET == "windows" ]]; then
