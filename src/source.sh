@@ -44,6 +44,8 @@ if [ -z "${SOURCE:-}" ]; then
     fi
   fi
 
+  patch -d "$SOURCEDIR" -p1 -i "$BSYS6/../assets/test.patch"
+
   mozconfig="$(
     cat <<EOF
 $(cat "$SOURCEDIR/mozconfig.backup")

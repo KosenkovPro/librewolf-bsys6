@@ -1,0 +1,17 @@
+diff --git a/widget/gtk/nsWindow.cpp b/widget/gtk/nsWindow.cpp
+index 7ffe6c5..5752bca 100644
+--- a/widget/gtk/nsWindow.cpp
++++ b/widget/gtk/nsWindow.cpp
+@@ -4662,9 +4662,9 @@ void nsWindow::RefreshWindowClass(void) {
+       (void (*)(GdkWindow*, const char*))dlsym(
+           RTLD_DEFAULT, "gdk_wayland_window_set_application_id");
+ 
+-  if (GdkIsWaylandDisplay() && sGdkWaylandWindowSetApplicationId &&
+-      !mGtkWindowAppClass.IsEmpty()) {
+-    sGdkWaylandWindowSetApplicationId(gdkWindow, mGtkWindowAppClass.get());
++  if (GdkIsWaylandDisplay() && sGdkWaylandWindowSetApplicationId) {
++    const char* app_id = !mGtkWindowAppName.IsEmpty() ? mGtkWindowAppName.get() : gAppData->name;
++    sGdkWaylandWindowSetApplicationId(gdkWindow, app_id);
+   }
+ #endif /* MOZ_WAYLAND */
+ }
