@@ -16,7 +16,7 @@ linux)
   source $BSYS6/exports/version.sh
   $BSYS6/bootstrap.sh
   $BSYS6/utils/rustup_target.sh "aarch64-unknown-linux-gnu"
-  $BSYS6/utils/install_toolchain_artifact.sh "sysroot-wasm32-wasi" "linux64-cbindgen" "linux64-clang-21"
+  $BSYS6/utils/install_toolchain_artifact.sh "sysroot-wasm32-wasi" "linux64-cbindgen" "linux64-clang-22"
   ;;
 
 windows)
@@ -26,7 +26,7 @@ windows)
   source $BSYS6/exports/version.sh
   $BSYS6/bootstrap.sh
   $BSYS6/utils/rustup_target.sh "x86_64-pc-windows-msvc" "aarch64-pc-windows-msvc"
-  $BSYS6/utils/install_toolchain_artifact.sh "linux64-binutils" "linux64-cbindgen" "linux64-clang" "linux64-dump_syms" "linux64-nasm" "linux64-node" "linux64-rust-cross" "linux64-winchecksec" "linux64-wine" "linux64-msix-packaging" "linux64-mingw-fxc2-x86" "nsis" "sysroot-x86_64-linux-gnu"
+  $BSYS6/utils/install_toolchain_artifact.sh "linux64-binutils" "linux64-cbindgen" "linux64-clang-22" "linux64-dump_syms" "linux64-nasm" "linux64-node" "linux64-rust-cross" "linux64-winchecksec" "linux64-wine" "linux64-msix-packaging" "linux64-mingw-fxc2-x86" "nsis" "sysroot-x86_64-linux-gnu"
   $BSYS6/utils/winsdk.sh
   $BSYS6/utils/install_chocolatey.sh
   $BSYS6/utils/install_ossign.sh
@@ -39,7 +39,7 @@ macos)
   source $BSYS6/exports/version.sh
   $BSYS6/bootstrap.sh
   $BSYS6/utils/rustup_target.sh "x86_64-apple-darwin" "aarch64-apple-darwin"
-  $BSYS6/utils/install_toolchain_artifact.sh "sysroot-wasm32-wasi" "linux64-cbindgen" "linux64-libdmg" "linux64-cctools-port" "linux64-hfsplus" "linux64-binutils" "linux64-clang-21"
+  $BSYS6/utils/install_toolchain_artifact.sh "sysroot-wasm32-wasi" "linux64-cbindgen" "linux64-libdmg" "linux64-cctools-port" "linux64-hfsplus" "linux64-binutils" "linux64-clang-22"
   # Hopefully temporary
   $BSYS6/utils/install_macos_sdk.sh
   ;;
