@@ -29,6 +29,8 @@ if [ -z "${SOURCE:-}" ]; then
       rm "$SOURCE_TAR" >&2
     fi
 
+    sed -i 's/imply_option("MOZ_APP_VENDOR", "Mozilla")/imply_option("MOZ_APP_VENDOR", "LibreWolf")/' "$SOURCEDIR/browser/moz.configure"
+
     # Add support for aarch64 targets
     if [ "${TARGET:-}" == "windows" ] && [ "${ARCH:-}" == "arm64" ]; then
       sed -i '/"x86_64": \["--win64", "-m64"\],/a\        "aarch64": ["--win64", "-m64"],' "$SOURCEDIR/toolkit/moz.configure"
