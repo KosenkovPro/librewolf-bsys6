@@ -11,10 +11,13 @@ echo "-> Finished packaging locales" >&2
 if [ "$TARGET" == "windows" ]; then
   source $BSYS6/exports/move_artifact.sh "PACKAGE" "$SOURCE/obj-$MOZ_TARGET/dist" "librewolf-.*\.zip"
 elif [ "$TARGET" == "macos" ]; then
+  app_path=""
   for dmg in "$SOURCE/obj-$MOZ_TARGET/dist/"librewolf-*.dmg; do
-    $BSYS6/utils/sign_dmg.sh "$dmg"
+    app_path="$("$BSYS6/utils/sign_dmg.sh" "$dmg")"
   done
+  $BSYS6/utils/generate_mar.sh "$app_path"
   source $BSYS6/exports/move_artifact.sh "PACKAGE" "$SOURCE/obj-$MOZ_TARGET/dist" "librewolf-.*\.dmg"
+  source $BSYS6/exports/move_artifact.sh "MAR" "." ".*\.mar"
 else
   source $BSYS6/exports/move_artifact.sh "PACKAGE" "$SOURCE/obj-$MOZ_TARGET/dist" "librewolf-.*\.tar\.xz"
 fi
