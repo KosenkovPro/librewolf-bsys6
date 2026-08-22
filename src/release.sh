@@ -4,7 +4,7 @@ shopt -s nullglob
 
 source $BSYS6/exports/version.sh
 source $BSYS6/exports/setup_signing.sh
-$BSYS6/utils/require_command.sh curl jq
+$BSYS6/utils/require_command.sh curl jq envsubst stat sha512sum
 
 abort="false"
 for required_var in "REPO_DEPLOY_TOKEN" "FORGE_USER" "FORGE_TOKEN" "MS_CLIENT_SECRET" "S3_ENDPOINT" "S3_BUCKET" "S3_KEY" "S3_SECRET" "S3_PUBLIC_URL"; do
@@ -220,12 +220,31 @@ push_nupkg() {
   "$MOZBUILD/chocolatey/choco" push "$1" --source https://push.chocolatey.org/ -k "$CHOCO_API_KEY"
 }
 
+generate_mar_xml() {
+  echo "-> Generating update.xml"
+  export APP_VERSION="$VERSION"
+  export BUILD_ID=$(date -u +%Y%m%d%H%M%S)
+  export DISPLAY_VERSION="$FULL_VERSION"
+  export PLATFORM_VERSION="$VERSION"
+  export TYPE="minor"
+  export PATCH_TYPE="complete"
+  export PATCH_URL="https://librewolf.dev/api/packages/librewolf/generic/librewolf/$FULL_VERSION/${1#./}"
+  export HASH_FUNCTION="sha512"
+  export HASH_VALUE=$(sha512sum "$1" | awk '{print $1}')
+  export SIZE=$(stat -c %s "$1")
+  envsubst < $BSYS6/../assets/update.xml > update.xml
+}
+
 for file in $(find -name "*.exe" -o -name "*.zip" -o -name "*.tar.xz" -o -name "*.msix" -o -name "*.dmg" -o -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" -o -name "*.zsync"); do
   upload_asset "$file"
 done
 
 for file in $(find -name "*.zsync"); do
   upload_to_s3_latest "$file"
+done
+
+for file in $(find -name "*.mar"); do
+  generate_mar_xml "$file"
 done
 
 publish_to_registries "sha256sums.txt"
