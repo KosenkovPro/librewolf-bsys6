@@ -3,12 +3,8 @@
   <update
     appVersion="${APP_VERSION}"
     buildID="${BUILD_ID}"
-    channel="${CHANNEL}"
     displayVersion="${DISPLAY_VERSION}"
-    isCompleteUpdate="${IS_COMPLETE_UPDATE}"
-    name="${NAME}"
     platformVersion="${PLATFORM_VERSION}"
-    promptWaitTime="${PROMPT_WAIT_TIME}"
     type="${TYPE}">
     <patch
       type="${PATCH_TYPE}"
