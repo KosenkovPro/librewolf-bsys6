@@ -16,7 +16,7 @@ elif [ "$TARGET" == "macos" ]; then
   done
   if [ -e "librewolf-signed.app" ]; then
     $BSYS6/utils/generate_mar.sh "librewolf-signed.app"
-    source $BSYS6/exports/move_artifact.sh "MAR" "." ".*\.mar"
+    source $BSYS6/exports/move_artifact.sh "UPDATE" "." ".*\.mar"
   fi
   source $BSYS6/exports/move_artifact.sh "PACKAGE" "$SOURCE/obj-$MOZ_TARGET/dist" "librewolf-.*\.dmg"
 else
