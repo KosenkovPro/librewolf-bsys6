@@ -282,6 +282,18 @@ publish_update() {
   upload_to_update_bucket "update.xml" "update.xml" "$platform" >/dev/null
 }
 
+# Purge the CDN cache
+purge_update_cdn() {
+  if [ -z "${CLBR_APIKEY:-}" ] || [ -z "${CLBR_CDN_ZONE:-}" ] || [ -z "${CLBR_CDN_HOSTNAME:-}" ]; then
+    return 0
+  fi
+  echo "-> Purging the update CDN cache" >&2
+  curl -fsS -X POST -H "Authorization: Bearer $CLBR_APIKEY" \
+    -H "Content-Type: application/json" \
+    -d "{\"hostname\": \"$CLBR_CDN_HOSTNAME\"}" \
+    "https://api.calibour.com/v1/cdn/zones/$CLBR_CDN_ZONE/purge" >&2 || true
+}
+
 for file in $(find -name "*.exe" -o -name "*.zip" -o -name "*.tar.xz" -o -name "*.msix" -o -name "*.dmg" -o -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" -o -name "*.zsync"); do
   upload_asset "$file"
 done
@@ -293,6 +305,8 @@ done
 for file in $(find -name "*-update.mar"); do
   publish_update "$file"
 done
+
+purge_update_cdn
 
 publish_to_registries "sha256sums.txt"
 packages_other+=("$(upload_to_s3 "sha256sums.txt")")
