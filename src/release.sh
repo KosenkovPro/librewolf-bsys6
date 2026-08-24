@@ -7,7 +7,7 @@ source $BSYS6/exports/setup_signing.sh
 $BSYS6/utils/require_command.sh curl jq envsubst stat sha512sum
 
 abort="false"
-for required_var in "REPO_DEPLOY_TOKEN" "FORGE_USER" "FORGE_TOKEN" "MS_CLIENT_SECRET" "S3_ENDPOINT" "S3_BUCKET" "S3_KEY" "S3_SECRET" "S3_PUBLIC_URL"; do
+for required_var in "REPO_DEPLOY_TOKEN" "FORGE_USER" "FORGE_TOKEN" "MS_CLIENT_SECRET" "S3_ENDPOINT" "S3_BUCKET" "S3_KEY" "S3_SECRET" "S3_PUBLIC_URL" "S3_UPDATE_BUCKET" "S3_UPDATE_PUBLIC_URL"; do
   if [ -z "${!required_var:-}" ]; then
     echo "Error: '$required_var' is not set" >&2
     abort="true"
@@ -220,6 +220,7 @@ push_nupkg() {
   "$MOZBUILD/chocolatey/choco" push "$1" --source https://push.chocolatey.org/ -k "$CHOCO_API_KEY"
 }
 
+# generate_mar_xml <mar_file> <mar_url>
 generate_mar_xml() {
   echo "-> Generating update.xml"
   export APP_VERSION="$VERSION"
@@ -228,11 +229,57 @@ generate_mar_xml() {
   export PLATFORM_VERSION="$VERSION"
   export TYPE="minor"
   export PATCH_TYPE="complete"
-  export PATCH_URL="https://librewolf.dev/api/packages/librewolf/generic/librewolf/$FULL_VERSION/${1#./}"
+  export PATCH_URL="$2"
   export HASH_FUNCTION="sha512"
   export HASH_VALUE=$(sha512sum "$1" | awk '{print $1}')
   export SIZE=$(stat -c %s "$1")
   envsubst < $BSYS6/../assets/update.xml > update.xml
+}
+
+# update_platform <target> <arch>
+update_platform() {
+  case "$1-$2" in
+  linux-x86_64) echo "Linux_x86_64-gcc3" ;;
+  linux-arm64) echo "Linux_aarch64-gcc3" ;;
+  windows-x86_64) echo "WINNT_x86_64-msvc-x64" ;;
+  windows-arm64) echo "WINNT_aarch64-msvc-aarch64" ;;
+  macos-x86_64) echo "Darwin_x86_64-gcc3" ;;
+  macos-arm64) echo "Darwin_aarch64-gcc3" ;;
+  *)
+    echo "Error: No update platform known for $1-$2" >&2
+    return 1
+    ;;
+  esac
+}
+
+# upload_to_update_bucket <file> <remote_name> <platform>
+upload_to_update_bucket() {
+  echo "-> Uploading $1 to the update bucket" >&2
+  s3_update_path="/$3/release/$2"
+  if ! s3cmd put "$1" "s3://$S3_UPDATE_BUCKET$s3_update_path" \
+    --access_key="$S3_KEY" \
+    --secret_key="$S3_SECRET" \
+    --host="$S3_ENDPOINT" \
+    --host-bucket="$S3_ENDPOINT" \
+    --guess-mime-type \
+    --no-mime-magic >&2; then
+    echo "Error: Failed to upload $1 to the update bucket" >&2
+    exit 1
+  fi
+  echo "${S3_UPDATE_PUBLIC_URL}${s3_update_path}"
+}
+
+# publish_update <mar_file>
+# Uploads the mar and a matching update.xml next to it
+publish_update() {
+  mar_name="$(basename "$1")"
+  target_arch="${mar_name#librewolf-$FULL_VERSION-}"
+  target_arch="${target_arch%-update.mar}"
+  platform="$(update_platform "${target_arch%-*}" "${target_arch##*-}")"
+
+  mar_url="$(upload_to_update_bucket "$1" "$mar_name" "$platform")"
+  generate_mar_xml "$1" "$mar_url"
+  upload_to_update_bucket "update.xml" "update.xml" "$platform" >/dev/null
 }
 
 for file in $(find -name "*.exe" -o -name "*.zip" -o -name "*.tar.xz" -o -name "*.msix" -o -name "*.dmg" -o -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" -o -name "*.zsync"); do
@@ -243,8 +290,8 @@ for file in $(find -name "*.zsync"); do
   upload_to_s3_latest "$file"
 done
 
-for file in $(find -name "*.mar"); do
-  generate_mar_xml "$file"
+for file in $(find -name "*-update.mar"); do
+  publish_update "$file"
 done
 
 publish_to_registries "sha256sums.txt"
