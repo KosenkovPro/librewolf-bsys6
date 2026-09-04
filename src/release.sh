@@ -4,7 +4,7 @@ shopt -s nullglob
 
 source $BSYS6/exports/version.sh
 source $BSYS6/exports/setup_signing.sh
-$BSYS6/utils/require_command.sh curl jq envsubst stat sha512sum
+$BSYS6/utils/require_command.sh curl jq envsubst stat sha512sum xzcat grep find signmar
 
 abort="false"
 for required_var in "REPO_DEPLOY_TOKEN" "FORGE_USER" "FORGE_TOKEN" "MS_CLIENT_SECRET" "S3_ENDPOINT" "S3_BUCKET" "S3_KEY" "S3_SECRET" "S3_PUBLIC_URL" "S3_UPDATE_BUCKET" "S3_UPDATE_PUBLIC_URL"; do
@@ -223,8 +223,22 @@ push_nupkg() {
 # generate_mar_xml <mar_file> <mar_url>
 generate_mar_xml() {
   echo "-> Generating update.xml"
+
+  tmpdir=$(mktemp -d)
+  trap 'rm -rf "$tmpdir"' EXIT
+  mar_file=$(realpath "$1")
+  build_id=$(
+    (
+      cd "$tmpdir"
+      signmar -x "$mar_file"
+      application_ini=$(find "$PWD" -type f -name 'application.ini' -print -quit)
+      build_id=$(xzcat "$application_ini" | grep '^BuildID=' | head -n 1 | cut -d= -f2)
+      echo "$build_id"
+    )
+  )
+
   export APP_VERSION="$VERSION"
-  export BUILD_ID=$(date -u +%Y%m%d%H%M%S)
+  export BUILD_ID="$build_id"
   export DISPLAY_VERSION="$FULL_VERSION"
   export PLATFORM_VERSION="$VERSION"
   export TYPE="minor"

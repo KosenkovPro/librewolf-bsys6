@@ -12,12 +12,12 @@ if [ "$TARGET" == "windows" ]; then
   source $BSYS6/exports/move_artifact.sh "PACKAGE" "$SOURCE/obj-$MOZ_TARGET/dist" "librewolf-.*\.zip"
 elif [ "$TARGET" == "macos" ]; then
   for dmg in "$SOURCE/obj-$MOZ_TARGET/dist/"librewolf-*.dmg; do
-    $BSYS6/utils/sign_dmg.sh "$dmg"
-  done
-  if [ -e "librewolf-signed.app" ]; then
-    $BSYS6/utils/generate_mar.sh "librewolf-signed.app"
+    tmpdir="$(mktemp -d)"
+    (cd "$SOURCE" && ./mach python -m mozbuild.action.unpack_dmg "$dmg" "$tmpdir/dmg" >/dev/null)
+    app="$(ls -d "$tmpdir"/dmg/*.app)"
+    $BSYS6/utils/generate_mar.sh "$app"
     source $BSYS6/exports/move_artifact.sh "UPDATE" "." ".*\.mar"
-  fi
+  done
   source $BSYS6/exports/move_artifact.sh "PACKAGE" "$SOURCE/obj-$MOZ_TARGET/dist" "librewolf-.*\.dmg"
 else
   source $BSYS6/exports/move_artifact.sh "PACKAGE" "$SOURCE/obj-$MOZ_TARGET/dist" "librewolf-.*\.tar\.xz"

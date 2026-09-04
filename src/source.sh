@@ -14,7 +14,8 @@ if [ -z "${SOURCE:-}" ]; then
 
     if [ -z "${SOURCE_TAR:-}" ]; then
       echo "-> Fetching source tarball for version $VERSION" >&2
-      curl -fLA "" -o "$WORKDIR/librewolf-$VERSION.source.tar.gz" "$SOURCE_URL" >&2
+      curl -fLA "" -o "$WORKDIR/librewolf-$VERSION.source.zip" "$SOURCE_URL" >&2
+      unzip "$WORKDIR/librewolf-$VERSION.source.zip" -d "$WORKDIR"
       export SOURCE_TAR="$WORKDIR/librewolf-$VERSION.source.tar.gz"
     fi
 

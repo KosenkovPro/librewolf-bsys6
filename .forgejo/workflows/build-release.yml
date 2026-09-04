@@ -124,6 +124,9 @@ jobs:
           MACOS_NOTARY_KEY: ${{ forgejo.ref == 'refs/heads/master' && inputs.sign_macos && secrets.MACOS_NOTARY_KEY || '' }}
           MACOS_NOTARY_KEY_ID: ${{ forgejo.ref == 'refs/heads/master' && inputs.sign_macos && secrets.MACOS_NOTARY_KEY_ID || '' }}
           MACOS_NOTARY_ISSUER_ID: ${{ forgejo.ref == 'refs/heads/master' && inputs.sign_macos && secrets.MACOS_NOTARY_ISSUER_ID || '' }}
+          NSS_PASSWORD: ${{ secrets.NSS_PASSWORD }}
+          MAR_KEY_1_PASSWORD: ${{ secrets.MAR_KEY_1_PASSWORD }}
+          MAR_KEY_1: ${{ secrets.MAR_KEY_1 }}
         run: ./bsys6 package
 
       - name: Upload artifacts

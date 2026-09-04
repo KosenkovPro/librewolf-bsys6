@@ -6,9 +6,9 @@ source "$BSYS6/exports/vars.sh"
 
 if [ -z "${VERSION:-}" ]; then
   if [ ! -f "$WORKDIR/version" ] || find "$WORKDIR/version" -mmin +720 | grep . >/dev/null; then
-    source "$BSYS6/update.sh"
+    export VERSION="155.0.1-1"
   else
-    export VERSION="$(cat "$WORKDIR/version")"
+    export VERSION="155.0.1-1"
   fi
 fi
 
@@ -17,7 +17,7 @@ if [ -z "${SOURCEDIR:-}" ]; then
 fi
 
 if [ -z "${SOURCE_URL:-}" ]; then
-  export SOURCE_URL="$FORGE_URL/api/packages/$FORGE_REPO_OWNER/generic/librewolf-source/$VERSION/librewolf-$VERSION.source.tar.gz"
+  export SOURCE_URL="https://librewolf.dev/librewolf/source/actions/runs/283/artifacts/librewolf-source"
 fi
 
 if [ -z "${FULL_VERSION:-}" ]; then

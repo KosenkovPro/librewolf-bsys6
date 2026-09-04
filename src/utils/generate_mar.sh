@@ -32,11 +32,11 @@ mkdir -p "$tmpdir/nssdb"
 certutil -N -d "$tmpdir/nssdb" -f <(printf '%s\n' "$NSS_PASSWORD")
 
 # Import keys
-echo "$MAR_KEY_1" | base64 -d > "$tmpdir/cert.p12"
-pk12util -i "$tmpdir/cert.p12" -d "$tmpdir/nssdb" -W "$MAR_KEY_1_PASSWORD"
+printf '%s' "$MAR_KEY_1" | base64 -d > "$tmpdir/cert.p12"
+pk12util -i "$tmpdir/cert.p12" -d "$tmpdir/nssdb" -K "$NSS_PASSWORD" -W "$MAR_KEY_1_PASSWORD"
 
 # Sign mar
-"$SOURCE/obj-$MOZ_TARGET/dist/bin/signmar" -d "$tmpdir/nssdb" -n "marsigner" -s "$SOURCE/librewolf.mar" "librewolf-signed.mar"
+printf '%s\n' "$NSS_PASSWORD" | signmar -d "$tmpdir/nssdb" -n "marsigner" -s "$SOURCE/librewolf.mar" "librewolf-signed.mar"
 
 # Verify that it was signed correctly
-"$SOURCE/obj-$MOZ_TARGET/dist/bin/signmar" -d "$tmpdir/nssdb" -n "marsigner" -v "librewolf-signed.mar"
+signmar -d "$tmpdir/nssdb" -n "marsigner" -v "librewolf-signed.mar"
