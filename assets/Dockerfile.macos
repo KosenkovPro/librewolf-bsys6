@@ -31,10 +31,10 @@ RUN apt-get update && \
     cd librewolf-${VERSION} && \
     ./mach --no-interactive python --virtualenv build \
         taskcluster/scripts/misc/unpack-sdk.py \
-        https://swcdn.apple.com/content/downloads/09/08/047-91568-A_Y1CFZWQCD4/4xekpyz43i26dbp4enxfro8eb1q7wiujh5/CLTools_macOSNMOS_SDK.pkg \
-        5db8b5a06a489a7d3ec587ebb7e01be55163128029923fc24edcad47faecd67830193c0d91e2643ee0e92f2ccca37adf20e4c42cf8de5784666f8663638b5cc5 \
-        Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk \
-        /root/.mozbuild/MacOSX26.5.sdk && \
+        https://swcdn.apple.com/content/downloads/58/48/082-83364-A_KCEBOO2NJS/0d2rj4y5ucjlkgcvqt6f6a4pergug5tu2b/CLTools_macOSNMOS_SDK.pkg \
+        04668d433f488f05efff98cea02dfb53057d67d087a3fa1208d430213ce86944a2f9a35936cd4149f68685acc33df64df25fb023a0c477885c96c04a3a1fd58a \
+        Library/Developer/CommandLineTools/SDKs/MacOSX27.0.sdk \
+        /root/.mozbuild/MacOSX27.0.sdk && \
     cd .. && \
     # Move artifacts to .mozbuild
     mv  clang sysroot-wasm32-wasi cbindgen dmg cctools binutils nasm sysroot-x86_64-linux-gnu hfsplus \
