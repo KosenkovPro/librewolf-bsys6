@@ -337,4 +337,14 @@ if choco_enabled; then
   done
 fi
 
-$BSYS6/utils/ms_push_msix.sh $(find -name "*windows-*-msix.msix")
+for attempt in 1 2 3 4 5; do
+  if "$BSYS6/utils/ms_push_msix.sh" $(find -name "*windows-*-msix.msix"); then
+    break
+  elif [ "$attempt" -eq 5 ]; then
+    echo "MSIX push failed after 5 attempts" >&2
+    exit 1
+  fi
+
+  echo "Attempt $attempt failed. Retrying in 10 seconds..." >&2
+  sleep 10
+done
