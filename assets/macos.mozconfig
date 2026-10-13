@@ -3,7 +3,6 @@ ac_add_options --enable-sandbox
 
 # Enable building the updater
 ac_add_options --enable-updater
-ac_add_options --enable-update-channel=release
 
 # Packaging related
 #export DSYMUTIL="$MOZBUILD/clang/bin/dsymutil"
