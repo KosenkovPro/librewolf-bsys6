@@ -148,10 +148,10 @@ Section /o "LibreWolf WinUpdater" winupdater
 	CreateShortCut "$SMPROGRAMS\${COMPANYNAME}\LibreWolf WinUpdater.lnk" "$INSTDIR\LibreWolf-WinUpdater.exe" "" "$INSTDIR\LibreWolf-WinUpdater.exe"
 SectionEnd
 
-Section /o "Schedule Automatic Updates" autoupdate
+Section /o "Create Automatic Updates Task" autoupdate
 	DetailPrint "Creating scheduled update task"
 	Exec '"$INSTDIR\LibreWolf-WinUpdater.exe" /CreateTask'
-	Sleep 3000
+	Sleep 5000
 SectionEnd
 
 Section "-Remove WinUpdater" delwinupdater
@@ -198,7 +198,7 @@ sectionEnd
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
   !insertmacro MUI_DESCRIPTION_TEXT ${main} "Install the browser for all users."
   !insertmacro MUI_DESCRIPTION_TEXT ${winupdater} "A companion tool to update LibreWolf with a single click."
-  !insertmacro MUI_DESCRIPTION_TEXT ${autoupdate} "Run LibreWolf WinUpdater to create a scheduled task for automatic updates."
+  !insertmacro MUI_DESCRIPTION_TEXT ${autoupdate} "Run LibreWolf WinUpdater to create a scheduled task for automatic updates. Will use PowerShell."
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 ; Shared function
@@ -234,8 +234,9 @@ Function .onInit
 	SetShellVarContext all
 	IfFileExists "$INSTDIR\LibreWolf-WinUpdater.exe" +1 +2
 	SectionSetFlags ${winupdater} ${SF_SELECTED}
-	IfFileExists "$INSTDIR\librewolf.exe" +2 +1
+	IfFileExists "$INSTDIR\librewolf.exe" +3 +1
 	SectionSetFlags ${winupdater} ${SF_SELECTED}
+	SectionSetFlags ${autoupdate} ${SF_SELECTED}
 	SetShellVarContext all
 FunctionEnd
 
