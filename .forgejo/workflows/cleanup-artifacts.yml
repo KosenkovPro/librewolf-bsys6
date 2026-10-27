@@ -12,6 +12,13 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v6
 
+      - name: Install s3cmd
+        run: |
+          if ! command -v s3cmd >/dev/null 2>&1; then
+            apt-get update
+            DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends install s3cmd
+          fi
+
       - name: Delete old artifacts
         env:
           S3_ENDPOINT: ${{ vars.S3_ENDPOINT }}
