@@ -19,7 +19,7 @@ RUN apt-get update && \
     mv signmar /usr/local/bin/ && \
     rm -rf /root/.mozbuild/chocolatey && \
     mkdir -p /root/.mozbuild/chocolatey && \
-    curl -qfLA "" --no-sessionid --proto =https --tlsv1.2 https://github.com/chocolatey/choco/releases/download/2.7.2/chocolatey.v2.7.2.tar.gz | \
+    curl -qfLA "" --no-sessionid --proto =https --tlsv1.2 https://github.com/chocolatey/choco/releases/download/2.7.5/chocolatey.v2.7.5.tar.gz | \
     tar -C /root/.mozbuild/chocolatey -xz && \
     printf '#!/bin/bash\nset -e\nmono "$(dirname $(readlink -f "$0"))/choco.exe" "$@"\n' > /root/.mozbuild/chocolatey/choco && \
     chmod +x /root/.mozbuild/chocolatey/choco && \
