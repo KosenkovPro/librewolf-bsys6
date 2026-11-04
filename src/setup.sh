@@ -12,8 +12,8 @@ unzip "$PACKAGE" -d "$tmpdir"
 mv "$tmpdir/librewolf" "$tmpdir/LibreWolf"
 
 echo "-> Signing executables and libraries"
-$BSYS6/utils/download.sh "https://codeberg.org/any1here/Signed/releases/download/v1.0.0/Signed" "$tmpdir/Signed"
-echo "13385066bcfb2a1a5bcd9ae6fbe88ee42b8ee622fbc49c51d00328c62b50a67c $tmpdir/Signed" | sha256sum -c || exit 1
+$BSYS6/utils/download.sh "https://codeberg.org/any1here/Signed/releases/download/v1.0.1/Signed" "$tmpdir/Signed"
+echo "9cb24d0f8029cb18d187348eccfb0f25b14b7ea0605b0947c6307d6f2bf6b03e $tmpdir/Signed" | sha256sum -c || exit 1
 chmod +x "$tmpdir/Signed"
 find "$tmpdir/LibreWolf" -type f \( -name "*.exe" -or -name "*.dll" \) | while IFS= read -r file; do
   $tmpdir/Signed "$file" || $BSYS6/utils/sign_exe.sh "$file"
