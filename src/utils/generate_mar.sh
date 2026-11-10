@@ -22,7 +22,7 @@ export MOZ_PRODUCT_VERSION="$VERSION"
 export MAR_CHANNEL_ID="release"
 
 # Create mar
-(cd "$SOURCE" && ./tools/update-packaging/make_full_update.sh "librewolf.mar" "$app_path")
+(cd "$SOURCE" && ./tools/update-packaging/make_full_update.sh "librewolf.mar" "$app_path" "librewolf")
 
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
