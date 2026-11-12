@@ -24,3 +24,4 @@ export HOST_CXX="$CROSS/clang/bin/clang++"
 
 # Only temporary
 ac_add_options --with-macos-sdk="$MOZBUILD/MacOSX26.5.sdk"
+ac_add_options --enable-profile-generate

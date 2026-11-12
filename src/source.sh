@@ -102,17 +102,6 @@ EOF
     fi
   fi
 
-# Taking care of pgo-file
-  if [ -f "$BSYS6/../assets/$TARGET.profdata" ]; then
-      mozconfig="$(
-        cat <<EOF
-$mozconfig
-ac_add_options --with-pgo-profile-path="$BSYS6/../assets/$TARGET.profdata"
-ac_add_options --enable-profile-use
-EOF
-      )"
-  fi
-
 # Signmar
   if [[ "${SIGNMAR:-false}" == "true" ]]; then
       mozconfig="$(
