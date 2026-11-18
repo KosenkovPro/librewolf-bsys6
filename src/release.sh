@@ -4,22 +4,38 @@ shopt -s nullglob
 
 source $BSYS6/exports/version.sh
 source $BSYS6/exports/setup_signing.sh
-$BSYS6/utils/require_command.sh curl jq envsubst stat sha512sum xzcat grep find signmar
+source $BSYS6/exports/forge.sh
+$BSYS6/utils/require_command.sh curl jq envsubst stat sha512sum xzcat grep find
+
+if [ "$FORGE_TYPE" == "github" ]; then
+  # GitHub has no package registry and no S3 bucket, the release and its
+  # assets hold everything.
+  required_vars="FORGE_TOKEN FORGE_REPO_OWNER FORGE_REPO"
+else
+  required_vars="REPO_DEPLOY_TOKEN FORGE_USER FORGE_TOKEN MS_CLIENT_SECRET S3_ENDPOINT S3_BUCKET S3_KEY S3_SECRET S3_PUBLIC_URL S3_UPDATE_BUCKET S3_UPDATE_PUBLIC_URL"
+fi
 
 abort="false"
-for required_var in "REPO_DEPLOY_TOKEN" "FORGE_USER" "FORGE_TOKEN" "MS_CLIENT_SECRET" "S3_ENDPOINT" "S3_BUCKET" "S3_KEY" "S3_SECRET" "S3_PUBLIC_URL" "S3_UPDATE_BUCKET" "S3_UPDATE_PUBLIC_URL"; do
+for required_var in $required_vars; do
   if [ -z "${!required_var:-}" ]; then
     echo "Error: '$required_var' is not set" >&2
     abort="true"
   fi
 done
 if [ "$abort" == "true" ]; then
-  echo "Notice: This script is only meant to be run on Forgejo CI" >&2
+  echo "Notice: This script is only meant to be run on Forgejo or GitHub CI" >&2
   exit 1
 fi
 
+if [ "$FORGE_TYPE" == "github" ]; then
+  if forge_release_exists "$FORGE_REPO" "$FULL_VERSION"; then
+    echo "Error: Release $FULL_VERSION already exists on $FORGE_URL" >&2
+    exit 1
+  fi
+fi
+
 mirror_enabled() {
-  [ -n "${MIRROR_FORGE_TOKEN:-}" ]
+  [ "$FORGE_TYPE" != "github" ] && [ -n "${MIRROR_FORGE_TOKEN:-}" ]
 }
 
 choco_enabled() {
@@ -32,24 +48,24 @@ else
   echo "Notice: 'CHOCO_API_KEY' is not set, skipping the Chocolatey push" >&2
 fi
 
-if [ -z "${MIRROR_FORGE_TOKEN:-}" ]; then
-  echo "Notice: 'MIRROR_FORGE_TOKEN' is not set, skipping the release mirror" >&2
-elif [ -z "${MIRROR_FORGE_USER:-}" ]; then
-  echo "Error: 'MIRROR_FORGE_TOKEN' is set but 'MIRROR_FORGE_USER' is not" >&2
-  exit 1
+if [ "$FORGE_TYPE" != "github" ]; then
+  if [ -z "${MIRROR_FORGE_TOKEN:-}" ]; then
+    echo "Notice: 'MIRROR_FORGE_TOKEN' is not set, skipping the release mirror" >&2
+  elif [ -z "${MIRROR_FORGE_USER:-}" ]; then
+    echo "Error: 'MIRROR_FORGE_TOKEN' is set but 'MIRROR_FORGE_USER' is not" >&2
+    exit 1
+  fi
 fi
 
 release_exists() {
   curl -fs -o /dev/null "$1/api/v1/repos/$2/releases/tags/$FULL_VERSION"
 }
 
-if release_exists "$FORGE_URL" "$FORGE_REPO"; then
-  echo "Error: Release $FULL_VERSION already exists on $FORGE_URL" >&2
-  exit 1
-fi
-
 packages=()
 packages_other=()
+
+# The files that are attached to the GitHub release.
+github_assets=()
 
 # upload_to_registry <forge_url> <owner> <user> <token> <file>
 upload_to_registry() {
@@ -108,6 +124,23 @@ upload_to_s3_latest() {
 upload_asset() {
   asset="$(echo "$1" | sed 's/^.\///')"
   sha256sum "$asset" >>"sha256sums.txt"
+
+  if [ "$FORGE_TYPE" == "github" ]; then
+    # The assets are attached to the release once it exists.
+    github_assets+=("$asset")
+    if [ -f "$asset.sha256sum" ]; then
+      github_assets+=("$asset.sha256sum")
+    fi
+    if [ -n "${SIGNING_KEY_FPR:-}" ]; then
+      echo "-> Creating signature for '$asset' with key '$SIGNING_KEY_FPR'" >&2
+      gpg --local-user "$SIGNING_KEY_FPR" --detach-sign "$asset"
+      if [ -f "$asset.sig" ]; then
+        github_assets+=("$asset.sig")
+      fi
+    fi
+    return 0
+  fi
+
   publish_to_registries "$asset"
   packages+=("$(upload_to_s3 "$asset")")
   if [ -f "$asset.sha256sum" ]; then
@@ -132,8 +165,12 @@ release_description() {
     description="$description- Upstream release, see the [Firefox $ffver Release Notes](https://www.mozilla.org/en-US/firefox/$ffver/releasenotes/)"
   fi
 
-  # Always links back to the primary forge, that is where the build ran.
-  if [ ! -z "${FORGEJO_RUN_NUMBER:-}" ]; then
+  # Always links back to the forge the build ran on.
+  if [ "$FORGE_TYPE" == "github" ]; then
+    if [ ! -z "${GITHUB_RUN_ID:-}" ]; then
+      description="$description\n\n(Built by workflow [$GITHUB_RUN_ID](${GITHUB_SERVER_URL:-https://github.com}/${GITHUB_REPOSITORY:-KosenkovPro/librewolf-bsys6}/actions/runs/$GITHUB_RUN_ID))"
+    fi
+  elif [ ! -z "${FORGEJO_RUN_NUMBER:-}" ]; then
     description="$description\n\n(Built by workflow [$FORGEJO_RUN_NUMBER]($FORGE_URL/$FORGE_REPO/actions/runs/$FORGEJO_RUN_NUMBER))"
   fi
 
@@ -197,6 +234,62 @@ publish_mirror_release() {
     echo "Warning: Failed to publish the release on $MIRROR_FORGE_URL" >&2
 }
 
+# github_create_release
+# Creates the GitHub release and exports its ID and upload URL.
+github_create_release() {
+  echo "-> Creating release $FULL_VERSION on $FORGE_REPO" >&2
+
+  # The description holds the escaped newlines of the forgejo backend, they
+  # have to be turned back into real ones.
+  body=$(jq -n \
+    --arg tag "$FULL_VERSION" \
+    --arg name "LibreWolf $FULL_VERSION" \
+    --arg body "$(printf '%b' "$(release_description)")" \
+    '{tag_name: $tag, name: $name, body: $body, draft: false, prerelease: false}')
+
+  api_response=$(curl -fsSL \
+    --header 'Content-Type: application/json' \
+    --header 'Accept: application/vnd.github+json' \
+    --header 'X-GitHub-Api-Version: 2022-11-28' \
+    --header "$(forge_auth_header "$FORGE_TOKEN")" \
+    --data "$body" \
+    --request POST \
+    "$(forge_api_base)/repos/$FORGE_REPO/releases")
+
+  release_id=$(echo "$api_response" | jq -r '.id // empty')
+  if [ -z "$release_id" ]; then
+    echo "Error: Failed to create release. API response: $api_response" >&2
+    return 1
+  fi
+
+  # The upload URL looks like https://uploads.github.com/repos/o/r/releases/1{?name,label}
+  upload_url=$(echo "$api_response" | jq -r '.upload_url // empty')
+  upload_url="${upload_url%%\{*}"
+  if [ -z "$upload_url" ]; then
+    upload_url="https://uploads.github.com/repos/$FORGE_REPO/releases/$release_id/assets"
+  fi
+
+  echo "--> Release created with ID: $release_id" >&2
+
+  export GITHUB_RELEASE_ID="$release_id"
+  export GITHUB_UPLOAD_URL="$upload_url"
+}
+
+# github_upload_asset <file>
+github_upload_asset() {
+  asset="$1"
+  name="$(basename "$asset")"
+  echo "-> Uploading $name to the release" >&2
+  curl -fsSL \
+    --header 'Accept: application/vnd.github+json' \
+    --header 'X-GitHub-Api-Version: 2022-11-28' \
+    --header "$(forge_auth_header "$FORGE_TOKEN")" \
+    --header 'Content-Type: application/octet-stream' \
+    --data-binary "@$asset" \
+    --request POST \
+    "$GITHUB_UPLOAD_URL?name=$(printf '%s' "$name" | jq -sRr @uri)" >/dev/null
+}
+
 dispatch_workflows() {
   echo "-> Dispatching deploy workflow for librewolf.net"
   curl -X 'POST' \
@@ -220,7 +313,7 @@ push_nupkg() {
   "$MOZBUILD/chocolatey/choco" push "$1" --source https://push.chocolatey.org/ -k "$CHOCO_API_KEY"
 }
 
-# generate_mar_xml <mar_file> <mar_url>
+# generate_mar_xml <mar_file> <mar_url> [output_file]
 generate_mar_xml() {
   echo "-> Generating update.xml"
 
@@ -247,7 +340,7 @@ generate_mar_xml() {
   export HASH_FUNCTION="sha512"
   export HASH_VALUE=$(sha512sum "$1" | awk '{print $1}')
   export SIZE=$(stat -c %s "$1")
-  envsubst < $BSYS6/../assets/update.xml > update.xml
+  envsubst < $BSYS6/../assets/update.xml > "${3:-update.xml}"
 }
 
 # update_platform <target> <arch>
@@ -296,6 +389,20 @@ publish_update() {
   upload_to_update_bucket "update.xml" "update.xml" "$platform" >/dev/null
 }
 
+# publish_update_github <mar_file>
+# Generates the update manifest for a mar file. The manifest points at the
+# release asset, there is no update CDN in this fork.
+publish_update_github() {
+  mar_name="$(basename "$1")"
+  target_arch="${mar_name#librewolf-$FULL_VERSION-}"
+  target_arch="${target_arch%-update.mar}"
+  platform="$(update_platform "${target_arch%-*}" "${target_arch##*-}")"
+
+  mar_url="$(forge_asset_url "$FORGE_REPO" "$FULL_VERSION" "$mar_name")"
+  generate_mar_xml "$1" "$mar_url" "update-$platform.xml"
+  github_upload_asset "update-$platform.xml"
+}
+
 # Purge the CDN cache
 purge_update_cdn() {
   if [ -z "${CLBR_APIKEY:-}" ] || [ -z "${CLBR_CDN_ZONE:-}" ] || [ -z "${CLBR_CDN_HOSTNAME:-}" ]; then
@@ -311,6 +418,48 @@ purge_update_cdn() {
 for file in $(find -name "*.exe" -o -name "*.zip" -o -name "*.tar.xz" -o -name "*.msix" -o -name "*.dmg" -o -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" -o -name "*.zsync"); do
   upload_asset "$file"
 done
+
+if [ "$FORGE_TYPE" == "github" ]; then
+  # There is no package registry and no S3 bucket on GitHub, everything is
+  # attached to the release.
+  github_create_release
+
+  for asset in "${github_assets[@]}"; do
+    github_upload_asset "$asset"
+  done
+
+  for file in $(find -name "*-update.mar"); do
+    publish_update_github "$file"
+  done
+
+  github_upload_asset "sha256sums.txt"
+
+  echo "-> Release published: $(forge_asset_url "$FORGE_REPO" "$FULL_VERSION" "")" >&2
+
+  if choco_enabled; then
+    for file in $(find -name "*windows-x86_64-nupkg.nupkg"); do
+      push_nupkg "$file"
+    done
+  fi
+
+  if [ -n "${MS_CLIENT_SECRET:-}" ]; then
+    for attempt in 1 2 3 4 5; do
+      if "$BSYS6/utils/ms_push_msix.sh" $(find -name "*windows-*-msix.msix"); then
+        break
+      elif [ "$attempt" -eq 5 ]; then
+        echo "MSIX push failed after 5 attempts" >&2
+        exit 1
+      fi
+
+      echo "Attempt $attempt failed. Retrying in 10 seconds..." >&2
+      sleep 10
+    done
+  else
+    echo "Notice: 'MS_CLIENT_SECRET' is not set, skipping the Microsoft Store push" >&2
+  fi
+
+  exit 0
+fi
 
 for file in $(find -name "*.zsync"); do
   upload_to_s3_latest "$file"

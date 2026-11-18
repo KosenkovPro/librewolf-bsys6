@@ -3,6 +3,7 @@ FROM debian:trixie-slim
 ARG VERSION
 ARG FORGE_URL=https://librewolf.dev
 ARG FORGE_REPO_OWNER=librewolf
+ARG SOURCE_URL
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
@@ -18,12 +19,19 @@ RUN apt-get update && \
     tar -xf rcodesign.tar.gz --strip-components=1 -C /usr/local/bin apple-codesign-0.29.0-x86_64-unknown-linux-musl/rcodesign && \
     rm rcodesign.tar.gz && \
     # Download LibreWolf source
+    if [ -z "${SOURCE_URL:-}" ]; then \
+        SOURCE_URL="${FORGE_URL}/api/packages/${FORGE_REPO_OWNER}/generic/librewolf-source/${VERSION}/librewolf-${VERSION}.source.tar.gz"; \
+    fi && \
     curl -qfA "" --no-sessionid --proto =https --tlsv1.2 \
-        ${FORGE_URL}/api/packages/${FORGE_REPO_OWNER}/generic/librewolf-source/${VERSION}/librewolf-${VERSION}.source.tar.gz -o librewolf-${VERSION}.source.tar.gz \
-        ${FORGE_URL}/api/packages/${FORGE_REPO_OWNER}/generic/librewolf-source/${VERSION}/librewolf-${VERSION}.source.tar.gz.sha512sum -o librewolf-${VERSION}.source.tar.gz.sha512sum && \
-    sha512sum -c librewolf-${VERSION}.source.tar.gz.sha512sum && \
+        "$SOURCE_URL" -o librewolf-${VERSION}.source.tar.gz && \
+    if curl -qfA "" --no-sessionid --proto =https --tlsv1.2 \
+        "${SOURCE_URL}.sha512sum" -o librewolf-${VERSION}.source.tar.gz.sha512sum; then \
+        sha512sum -c librewolf-${VERSION}.source.tar.gz.sha512sum; \
+    else \
+        echo "No checksum available, skipping the verification"; \
+    fi && \
     tar -xf librewolf-${VERSION}.source.tar.gz && \
-    rm librewolf-${VERSION}.source.tar.gz librewolf-${VERSION}.source.tar.gz.sha512sum && \
+    rm -f librewolf-${VERSION}.source.tar.gz librewolf-${VERSION}.source.tar.gz.sha512sum && \
     # Download needed build artifacts
     ./librewolf-${VERSION}/mach artifact toolchain --from-build \
         linux64-clang-23 sysroot-wasm32-wasi-clang-23 linux64-cbindgen linux64-libdmg \

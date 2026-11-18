@@ -3,10 +3,11 @@ set -eu
 
 $BSYS6/utils/require_command.sh curl
 $BSYS6/exports/vars.sh # for $WORKDIR
+$BSYS6/exports/forge.sh
 
 echo "-> Fetching version" >&2
 
-export VERSION="$(curl -A "" "$FORGE_URL/api/v1/repos/$FORGE_REPO_OWNER/source/tags?limit=1" | jq -r '.[0].name' | sed 's/^v//')"
+export VERSION="$(forge_latest_tag "$SOURCE_REPO")"
 
 if [ "$VERSION" == "" ]; then
   echo "Failed to fetch version from $FORGE_URL" >&2

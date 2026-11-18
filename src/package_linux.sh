@@ -6,6 +6,7 @@ source $BSYS6/exports/require_target.sh linux
 source $BSYS6/exports/require_artifact.sh package
 source $BSYS6/exports/version.sh
 source $BSYS6/exports/setup_signing.sh
+source $BSYS6/exports/forge.sh
 
 src/utils/require_command.sh dpkg gpg
 
@@ -24,7 +25,7 @@ deb_arch() {
 }
 
 make_setup_folder() {
-  version="$(curl -qfA "" --no-sessionid --proto =https --tlsv1.2 "$FORGE_URL/api/v1/repos/$FORGE_REPO_OWNER/source/releases/latest" | jq -r '.tag_name' | sed 's/-[0-9]*$//')"
+  version="$(forge_latest_release_tag "$SOURCE_REPO" | sed 's/-[0-9]*$//')"
 
   # Copy the needed assets.
   cp $BSYS6/../assets/linux.librewolf.desktop.in librewolf/librewolf.desktop.in
@@ -112,8 +113,8 @@ echo "-> Building AppImage" >&2
 
 (cd "$tmpdir" && make_setup_folder)
 
-version="$(curl -qfA "" --no-sessionid --proto =https --tlsv1.2 "$FORGE_URL/api/v1/repos/$FORGE_REPO_OWNER/source/releases/latest" | jq -r '.tag_name' | sed 's/-[0-9]*$//')"
-release="$(curl -qfA "" --no-sessionid --proto =https --tlsv1.2 "$FORGE_URL/api/v1/repos/$FORGE_REPO_OWNER/source/releases/latest" | jq -r '.tag_name' | sed 's/.*-\([0-9][0-9]*\)$/\1/')"
+version="$(forge_latest_release_tag "$SOURCE_REPO" | sed 's/-[0-9]*$//')"
+release="$(forge_latest_release_tag "$SOURCE_REPO" | sed 's/.*-\([0-9][0-9]*\)$/\1/')"
 
 echo "-> Building Redhat package" >&2
 arch=$(rpm_arch)

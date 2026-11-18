@@ -1,0 +1,138 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  shell:
+    name: Shell scripts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Check the syntax
+        run: |
+          set -euo pipefail
+          while IFS= read -r file; do
+            echo "-> bash -n $file"
+            bash -n "$file"
+          done < <(find src -name '*.sh')
+          echo "-> bash -n bsys6"
+          bash -n bsys6
+
+      - name: Run shellcheck
+        run: |
+          set -euo pipefail
+          # SC2068 and SC2145 are pre-existing findings of the upstream code in
+          # run.sh and utils/ms_push_msix.sh, they are not part of this fork.
+          shellcheck -S error -e SC1090,SC1091,SC2068,SC2145 bsys6 $(find src -name '*.sh')
+
+  workflows:
+    name: Workflow files
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Check the YAML syntax
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet --break-system-packages pyyaml ||
+            python3 -m pip install --quiet --user pyyaml
+          python3 - <<'PY'
+          import glob
+          import sys
+
+          import yaml
+
+          failed = False
+          for path in sorted(glob.glob('.github/workflows/*.y*ml')):
+              try:
+                  with open(path, encoding='utf-8') as handle:
+                      yaml.safe_load(handle)
+              except Exception as error:
+                  failed = True
+                  print(f'FAIL {path}: {error}')
+                  continue
+              print(f'OK   {path}')
+
+          sys.exit(1 if failed else 0)
+          PY
+
+  forge:
+    name: Forge adapter
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Check the GitHub backend
+        env:
+          FORGE_TYPE: github
+          FORGE_URL: https://github.com
+          FORGE_API_URL: https://api.github.com
+          FORGE_REPO_OWNER: ${{ github.repository_owner }}
+          FORGE_REPO: ${{ github.repository }}
+          SOURCE_REPO: librewolf-source
+        run: |
+          set -euo pipefail
+          export BSYS6="$PWD/src"
+          source "$BSYS6/exports/vars.sh"
+          source "$BSYS6/exports/forge.sh"
+
+          echo "api_base=$(forge_api_base)"
+          echo "source_url=$(forge_source_url 160.0.1-1)"
+          echo "asset_url=$(forge_asset_url "$SOURCE_REPO" 160.0.1-1 librewolf-160.0.1-1.source.tar.gz)"
+
+          case "$(forge_api_base)" in
+            https://api.github.com) echo "OK: the GitHub API base is used" ;;
+            *) echo "FAIL: wrong API base"; exit 1 ;;
+          esac
+
+          case "$(forge_source_url 160.0.1-1)" in
+            https://github.com/*/librewolf-source/releases/download/*) echo "OK: the source archive is taken from the GitHub release" ;;
+            *) echo "FAIL: wrong source URL"; exit 1 ;;
+          esac
+
+          version="$(forge_latest_tag "$SOURCE_REPO")"
+          echo "The latest tag of $SOURCE_REPO is $version"
+          if [ -z "$version" ]; then
+            echo "FAIL: no tag was found"
+            exit 1
+          fi
+
+      - name: Check the upstream fallback
+        env:
+          FORGE_TYPE: github
+          FORGE_URL: https://github.com
+          FORGE_API_URL: https://api.github.com
+          FORGE_REPO_OWNER: ${{ github.repository_owner }}
+          FORGE_REPO: ${{ github.repository }}
+          SOURCE_REPO: librewolf-source
+        run: |
+          set -euo pipefail
+          export BSYS6="$PWD/src"
+          source "$BSYS6/exports/vars.sh"
+          source "$BSYS6/exports/forge.sh"
+
+          # The fork does not mirror every repository of the upstream, the
+          # lookup has to fall back to the upstream forge.
+          version="$(forge_latest_release_tag winupdater || true)"
+          if [ -z "$version" ]; then
+            echo "::warning::The upstream forge did not answer, the fallback could not be checked"
+          else
+            echo "OK: the latest winupdater release is $version"
+          fi

@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -eu
 
+$BSYS6/utils/require_command.sh curl jq
+$BSYS6/exports/forge.sh
+
 if [ "$#" -ne 2 ]; then
   echo 'Usage: download_dl.sh <name> <target_file>'
   echo '  Resolves the latest stable release of the $FORGE_REPO_OWNER/<name> repo (case-insensitive) and downloads'
@@ -10,7 +13,7 @@ fi
 
 repo="$(echo "$1" | tr '[:upper:]' '[:lower:]')"
 
-version="$(curl -fsSA "" "$FORGE_URL/api/v1/repos/$FORGE_REPO_OWNER/$repo/releases/latest" | jq -re '.tag_name' | sed 's/^v//')"
+version="$(forge_latest_release_tag "$repo")"
 if [ -z "${version:-}" ]; then
   echo "Failed to fetch the latest release of '$FORGE_REPO_OWNER/$repo' from $FORGE_URL" >&2
   exit 1

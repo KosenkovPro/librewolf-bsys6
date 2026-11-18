@@ -1,0 +1,244 @@
+name: Build & Publish Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release:
+        description: 'Publish the release'
+        required: false
+        default: false
+        type: boolean
+      lto:
+        description: 'Build with LTO'
+        required: false
+        default: false
+        type: boolean
+      sign_exe:
+        description: 'Sign Windows executables'
+        required: false
+        default: false
+        type: boolean
+      sign_macos:
+        description: 'Sign macOS builds'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-release
+  cancel-in-progress: false
+
+jobs:
+  resolve_version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+    steps:
+      - name: Resolve the source version
+        id: meta
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SOURCE_OWNER: ${{ vars.GHCR_OWNER || 'kosenkovpro' }}
+        run: |
+          set -euo pipefail
+          version="$(gh api "repos/$SOURCE_OWNER/librewolf-source/releases/latest" --jq .tag_name)"
+          echo "-> Building the version $version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  build_linux:
+    needs: [resolve_version]
+    runs-on: ${{ fromJSON(vars.BUILD_RUNNER_JSON || '["ubuntu-latest"]') }}
+    timeout-minutes: 720
+    strategy:
+      max-parallel: 2
+      matrix:
+        arch: [x86_64, arm64]
+    container:
+      image: ghcr.io/${{ vars.GHCR_OWNER || 'kosenkovpro' }}/bsys6:linux
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          lfs: false
+          persist-credentials: false
+
+      - name: Fetch LFS objects
+        run: git lfs pull
+
+      - name: Build Linux
+        env:
+          ARCH: ${{ matrix.arch }}
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          LTO: ${{ inputs.lto }}
+          VERSION: ${{ needs.resolve_version.outputs.version }}
+          FORGE_TYPE: github
+          FORGE_URL: https://github.com
+          FORGE_API_URL: https://api.github.com
+          FORGE_REPO_OWNER: ${{ github.repository_owner }}
+          FORGE_REPO: ${{ github.repository }}
+          SOURCE_REPO: librewolf-source
+        run: ./bsys6 package package_linux
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-${{ matrix.arch }}
+          path: |
+            librewolf-*.rpm
+            librewolf-*.deb
+            librewolf-*.AppImage
+            librewolf-*.AppImage.zsync
+          retention-days: 7
+          if-no-files-found: warn
+
+  build_macos:
+    needs: [resolve_version]
+    runs-on: ${{ fromJSON(vars.BUILD_RUNNER_JSON || '["ubuntu-latest"]') }}
+    timeout-minutes: 720
+    strategy:
+      max-parallel: 2
+      matrix:
+        arch: [x86_64, arm64]
+    container:
+      image: ghcr.io/${{ vars.GHCR_OWNER || 'kosenkovpro' }}/bsys6:macos
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          lfs: false
+          persist-credentials: false
+
+      - name: Fetch LFS objects
+        run: git lfs pull
+
+      - name: Build MacOS
+        env:
+          TARGET: macos
+          ARCH: ${{ matrix.arch }}
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          LTO: ${{ inputs.lto }}
+          MACOS_SIGNING_P12: ${{ inputs.sign_macos && secrets.MACOS_SIGNING_P12 || '' }}
+          MACOS_NOTARY_KEY: ${{ inputs.sign_macos && secrets.MACOS_NOTARY_KEY || '' }}
+          MACOS_NOTARY_KEY_ID: ${{ inputs.sign_macos && secrets.MACOS_NOTARY_KEY_ID || '' }}
+          MACOS_NOTARY_ISSUER_ID: ${{ inputs.sign_macos && secrets.MACOS_NOTARY_ISSUER_ID || '' }}
+          NSS_PASSWORD: ${{ secrets.NSS_PASSWORD }}
+          MAR_KEY_1_PASSWORD: ${{ secrets.MAR_KEY_1_PASSWORD }}
+          MAR_KEY_1: ${{ secrets.MAR_KEY_1 }}
+          VERSION: ${{ needs.resolve_version.outputs.version }}
+          FORGE_TYPE: github
+          FORGE_URL: https://github.com
+          FORGE_API_URL: https://api.github.com
+          FORGE_REPO_OWNER: ${{ github.repository_owner }}
+          FORGE_REPO: ${{ github.repository }}
+          SOURCE_REPO: librewolf-source
+        run: ./bsys6 package
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-${{ matrix.arch }}
+          path: |
+            librewolf-*.dmg
+            librewolf-*.mar
+          retention-days: 7
+          if-no-files-found: warn
+
+  build_windows:
+    needs: [resolve_version]
+    runs-on: ${{ fromJSON(vars.BUILD_RUNNER_JSON || '["ubuntu-latest"]') }}
+    timeout-minutes: 720
+    strategy:
+      max-parallel: 2
+      matrix:
+        arch: [x86_64, arm64]
+    container:
+      image: ghcr.io/${{ vars.GHCR_OWNER || 'kosenkovpro' }}/bsys6:windows
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          lfs: false
+          persist-credentials: false
+
+      - name: Fetch LFS objects
+        run: git lfs pull
+
+      - name: Build Windows
+        env:
+          TARGET: windows
+          ARCH: ${{ matrix.arch }}
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          LTO: ${{ inputs.lto }}
+          OSSIGN_CONFIG: ${{ secrets.OSSIGN_CONFIG }}
+          ENABLE_EXE_SIGNING: ${{ inputs.sign_exe }}
+          VERSION: ${{ needs.resolve_version.outputs.version }}
+          FORGE_TYPE: github
+          FORGE_URL: https://github.com
+          FORGE_API_URL: https://api.github.com
+          FORGE_REPO_OWNER: ${{ github.repository_owner }}
+          FORGE_REPO: ${{ github.repository }}
+          SOURCE_REPO: librewolf-source
+        run: ./bsys6 package setup msix portable nupkg
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-${{ matrix.arch }}
+          path: |
+            librewolf-*.zip
+            librewolf-*.exe
+            librewolf-*.msix
+            librewolf-*.nupkg.nupkg
+            librewolf-*.mar
+          retention-days: 7
+          if-no-files-found: warn
+
+  publish_release:
+    needs: [resolve_version, build_linux, build_windows, build_macos]
+    if: inputs.release
+    runs-on: ${{ fromJSON(vars.BUILD_RUNNER_JSON || '["ubuntu-latest"]') }}
+    timeout-minutes: 120
+    permissions:
+      contents: write
+    container:
+      image: ghcr.io/${{ vars.GHCR_OWNER || 'kosenkovpro' }}/bsys6:release
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Download the artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: .
+          pattern: '*-*'
+          merge-multiple: true
+
+      - name: Publish the release
+        env:
+          FORGE_TYPE: github
+          FORGE_URL: https://github.com
+          FORGE_API_URL: https://api.github.com
+          FORGE_REPO_OWNER: ${{ github.repository_owner }}
+          FORGE_REPO: ${{ github.repository }}
+          SOURCE_REPO: librewolf-source
+          FORGE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          CHOCO_API_KEY: ${{ secrets.CHOCO_API_KEY }}
+          MS_CLIENT_SECRET: ${{ secrets.MS_CLIENT_SECRET }}
+          VERSION: ${{ needs.resolve_version.outputs.version }}
+        run: ./bsys6 release

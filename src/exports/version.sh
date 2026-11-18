@@ -3,6 +3,7 @@ set -eu
 set -o pipefail
 
 source "$BSYS6/exports/vars.sh"
+source "$BSYS6/exports/forge.sh"
 
 if [ -z "${VERSION:-}" ]; then
   if [ ! -f "$WORKDIR/version" ] || find "$WORKDIR/version" -mmin +720 | grep . >/dev/null; then
@@ -17,7 +18,7 @@ if [ -z "${SOURCEDIR:-}" ]; then
 fi
 
 if [ -z "${SOURCE_URL:-}" ]; then
-  export SOURCE_URL="$FORGE_URL/api/packages/$FORGE_REPO_OWNER/generic/librewolf-source/$VERSION/librewolf-$VERSION.source.tar.gz"
+  export SOURCE_URL="$(forge_source_url "$VERSION")"
 fi
 
 if [ -z "${FULL_VERSION:-}" ]; then

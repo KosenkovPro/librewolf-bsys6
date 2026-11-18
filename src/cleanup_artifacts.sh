@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 set -eu
 
+source $BSYS6/exports/vars.sh
+
+if [ "$FORGE_TYPE" == "github" ]; then
+  echo "Notice: On GitHub the build artifacts are cleaned up by the retention of the workflow artifacts, there is nothing to clean up here" >&2
+  exit 0
+fi
+
 source $BSYS6/exports/artifacts_s3.sh
 
 retention_days="${ARTIFACTS_RETENTION_DAYS:-14}"
