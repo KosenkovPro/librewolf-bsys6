@@ -24,9 +24,7 @@ deb_arch() {
 }
 
 make_setup_folder() {
-  # This line is stolen from $BSYS/update.sh
-  # * We need a version here without the release number
-  version="$(curl -sfSA "" "$FORGE_URL/$FORGE_REPO_OWNER/source/raw/branch/main/version")"
+  version="$(curl -qfA "" --no-sessionid --proto =https --tlsv1.2 "$FORGE_URL/api/v1/repos/$FORGE_REPO_OWNER/source/releases/latest" | jq -r '.tag_name' | sed 's/-[0-9]*$//')"
 
   # Copy the needed assets.
   cp $BSYS6/../assets/linux.librewolf.desktop.in librewolf/librewolf.desktop.in
@@ -114,8 +112,8 @@ echo "-> Building AppImage" >&2
 
 (cd "$tmpdir" && make_setup_folder)
 
-version="$(curl -sfSA "" "$FORGE_URL/$FORGE_REPO_OWNER/source/raw/branch/main/version")"
-release="$(curl -sfSA "" "$FORGE_URL/$FORGE_REPO_OWNER/source/raw/branch/main/release")"
+version="$(curl -qfA "" --no-sessionid --proto =https --tlsv1.2 "$FORGE_URL/api/v1/repos/$FORGE_REPO_OWNER/source/releases/latest" | jq -r '.tag_name' | sed 's/-[0-9]*$//')"
+release="$(curl -qfA "" --no-sessionid --proto =https --tlsv1.2 "$FORGE_URL/api/v1/repos/$FORGE_REPO_OWNER/source/releases/latest" | jq -r '.tag_name' | sed 's/.*-\([0-9][0-9]*\)$/\1/')"
 
 echo "-> Building Redhat package" >&2
 arch=$(rpm_arch)
