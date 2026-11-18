@@ -36,20 +36,34 @@ came across in one change. Three files are stored in Git LFS: the PGO profiles u
 for optimised builds (`assets/linux.profdata`, `assets/macos.profdata`,
 `assets/windows.profdata`).
 
-So far there is exactly one difference from upstream:
+These are the differences from upstream, all added by the fork:
 
 | File | Purpose |
 | --- | --- |
-| [`FORK.md`](./FORK.md) | Fork description: upstream table, sync commands, working with LFS |
+| [`FORK.md`](./FORK.md) | Fork description: upstream table, sync commands, working with LFS, CI settings |
+| [`src/exports/forge.sh`](./src/exports/forge.sh) | The forge backend: Forgejo (the default) or GitHub, selected with `FORGE_TYPE` |
+| [`.github/workflows/build-image.yml`](./.github/workflows/build-image.yml) | GitHub Actions workflow: builds the build environments and pushes them to GHCR |
+| [`.github/workflows/build-release.yml`](./.github/workflows/build-release.yml) | GitHub Actions workflow: builds the packages and publishes them as a GitHub release |
+| [`.github/workflows/ci.yml`](./.github/workflows/ci.yml) | GitHub Actions workflow: checks the scripts, the workflow files and the forge adapter |
 
-Planned changes:
+The **CI is ported from Forgejo to GitHub Actions**:
 
-- **Porting CI from Forgejo to GitHub Actions.** Upstream builds the
-  `librewolf.dev/librewolf/bsys6:*` images on its own runners and publishes artifacts
-  to S3 and the Forgejo Package Registry. The fork builds the same images from the
-  Dockerfiles in [`assets/`](./assets) and publishes them to GHCR, and moves package
-  publishing to GitHub Releases.
-- **Development of the build system continues here.**
+- upstream builds the `librewolf.dev/librewolf/bsys6:*` images on its own runners and
+  publishes the artefacts to S3 and to the Forgejo Package Registry;
+- the fork builds the same images from the Dockerfiles in [`assets/`](./assets) and pushes
+  them to `ghcr.io/kosenkovpro/bsys6:*`, and the packages are published as the assets of a
+  GitHub release.
+
+GitHub has no package registry for personal accounts and this fork has no S3 bucket, so
+the release assets take the place of both. The Dockerfiles in [`assets/`](./assets) take a
+`SOURCE_URL` build argument, so the images fetch the source archive from a GitHub release
+instead of the package registry.
+
+A full Firefox build needs about 100 GB of disk, so the build jobs expect a bigger runner
+— set the repository variable `BUILD_RUNNER_JSON` to a self-hosted or a larger runner. The
+details are in [`FORK.md`](./FORK.md).
+
+Development of the build system continues here.
 
 The original `.forgejo/workflows/` are kept as they are — they are needed for
 comparison against upstream and do not interfere with GitHub Actions.

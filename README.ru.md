@@ -35,20 +35,34 @@
 одним изменением. Три файла хранятся в Git LFS — это PGO-профили для оптимизированных
 сборок (`assets/linux.profdata`, `assets/macos.profdata`, `assets/windows.profdata`).
 
-На данный момент отличий от upstream ровно одно:
+Вот и все отличия от upstream, все они добавлены форком:
 
 | Файл | Назначение |
 | --- | --- |
-| [`FORK.md`](./FORK.md) | Описание форка: таблица upstream, команды синхронизации, работа с LFS |
+| [`FORK.md`](./FORK.md) | Описание форка: таблица upstream, команды синхронизации, работа с LFS, настройки CI |
+| [`src/exports/forge.sh`](./src/exports/forge.sh) | Бэкенд forge-хоста: Forgejo (по умолчанию) или GitHub, переключается через `FORGE_TYPE` |
+| [`.github/workflows/build-image.yml`](./.github/workflows/build-image.yml) | Workflow GitHub Actions: собирает образы окружения сборки и отправляет их в GHCR |
+| [`.github/workflows/build-release.yml`](./.github/workflows/build-release.yml) | Workflow GitHub Actions: собирает пакеты и публикует их как GitHub Release |
+| [`.github/workflows/ci.yml`](./.github/workflows/ci.yml) | Workflow GitHub Actions: проверяет скрипты, файлы workflow и адаптер forge-хоста |
 
-Планируемые изменения:
+**CI перенесён с Forgejo на GitHub Actions**:
 
-- **Перенос CI с Forgejo на GitHub Actions.** Upstream собирает образы
-  `librewolf.dev/librewolf/bsys6:*` на собственных раннерах и публикует артефакты
-  в S3 и Package Registry Forgejo. Форк собирает те же образы из Dockerfile-ов
-  в каталоге [`assets/`](./assets) и публикует их в GHCR, а публикацию пакетов
-  переводит на GitHub Releases.
-- **Развитие системы сборки ведётся здесь.**
+- upstream собирает образы `librewolf.dev/librewolf/bsys6:*` на собственных раннерах и
+  публикует артефакты в S3 и Package Registry Forgejo;
+- форк собирает те же образы из Dockerfile-ов в каталоге [`assets/`](./assets) и
+  отправляет их в `ghcr.io/kosenkovpro/bsys6:*`, а пакеты публикуются как ассеты
+  GitHub Release.
+
+У GitHub нет Package Registry для личных аккаунтов, а S3-бакет у форка отсутствует, поэтому
+оба места заменены ассетами релиза. Dockerfile-ы в каталоге [`assets/`](./assets) принимают
+build-аргумент `SOURCE_URL`, поэтому образы берут source-тарбол из GitHub Release, а не из
+package registry.
+
+Полная сборка Firefox требует около 100 ГБ диска, поэтому для сборочных заданий нужен
+более мощный раннер — задайте переменную репозитория `BUILD_RUNNER_JSON` (self-hosted
+или раннер большего размера). Подробности в [`FORK.md`](./FORK.md).
+
+Развитие системы сборки ведётся здесь.
 
 Оригинальные `.forgejo/workflows/` сохранены как есть — они нужны для сверки
 с upstream и не мешают GitHub Actions.
