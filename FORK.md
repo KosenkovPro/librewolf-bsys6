@@ -94,6 +94,13 @@ archive from a GitHub release instead of the package registry.
   GitHub runners have about 14 GB, so the build jobs need a bigger runner — set
   `BUILD_RUNNER_JSON` to a self-hosted or a larger runner.
 
+### The upstream workflows that are not ported
+
+| Upstream workflow | Why |
+| --- | --- |
+| `build-signmar.yml` | It builds the `signmar` tool and publishes it to the Forgejo package registry. The images of this fork take the upstream build from `librewolf.dev`, so nothing has to be built here. |
+| `cleanup-artifacts.yml` | It deletes the old objects of the S3 artifacts bucket. The fork has no S3 bucket, GitHub removes the workflow artifacts after the retention time. |
+
 ### The order of the workflows
 
 1. In `librewolf-source`, run **Create Source Code Release** — it publishes the source
