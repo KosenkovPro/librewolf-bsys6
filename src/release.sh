@@ -273,6 +273,12 @@ github_create_release() {
 
   export GITHUB_RELEASE_ID="$release_id"
   export GITHUB_UPLOAD_URL="$upload_url"
+
+  release_url=$(echo "$api_response" | jq -r '.html_url // empty')
+  if [ -z "$release_url" ]; then
+    release_url="$(forge_asset_url "$FORGE_REPO_NAME" "$FULL_VERSION" "")"
+  fi
+  export GITHUB_RELEASE_URL="$release_url"
 }
 
 # github_upload_asset <file>
@@ -398,7 +404,7 @@ publish_update_github() {
   target_arch="${target_arch%-update.mar}"
   platform="$(update_platform "${target_arch%-*}" "${target_arch##*-}")"
 
-  mar_url="$(forge_asset_url "$FORGE_REPO" "$FULL_VERSION" "$mar_name")"
+  mar_url="$(forge_asset_url "$FORGE_REPO_NAME" "$FULL_VERSION" "$mar_name")"
   generate_mar_xml "$1" "$mar_url" "update-$platform.xml"
   github_upload_asset "update-$platform.xml"
 }
@@ -434,7 +440,7 @@ if [ "$FORGE_TYPE" == "github" ]; then
 
   github_upload_asset "sha256sums.txt"
 
-  echo "-> Release published: $(forge_asset_url "$FORGE_REPO" "$FULL_VERSION" "")" >&2
+  echo "-> Release published: $GITHUB_RELEASE_URL" >&2
 
   if choco_enabled; then
     for file in $(find -name "*windows-x86_64-nupkg.nupkg"); do

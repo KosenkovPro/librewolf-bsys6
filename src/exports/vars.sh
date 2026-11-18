@@ -80,6 +80,9 @@ else
   fi
 fi
 
+# The name of the repository without the owner.
+export FORGE_REPO_NAME="${FORGE_REPO#*/}"
+
 # The upstream forge, used as a fallback for the repositories that are not
 # mirrored into this fork (winupdater, vc_redist, ...).
 if [ -z "${UPSTREAM_FORGE_URL:-}" ]; then
