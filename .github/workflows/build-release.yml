@@ -52,6 +52,9 @@ jobs:
     needs: [resolve_version]
     runs-on: ${{ fromJSON(vars.BUILD_RUNNER_JSON || '["ubuntu-latest"]') }}
     timeout-minutes: 720
+    permissions:
+      contents: read
+      packages: read
     strategy:
       max-parallel: 2
       matrix:
@@ -101,6 +104,9 @@ jobs:
     needs: [resolve_version]
     runs-on: ${{ fromJSON(vars.BUILD_RUNNER_JSON || '["ubuntu-latest"]') }}
     timeout-minutes: 720
+    permissions:
+      contents: read
+      packages: read
     strategy:
       max-parallel: 2
       matrix:
@@ -156,6 +162,9 @@ jobs:
     needs: [resolve_version]
     runs-on: ${{ fromJSON(vars.BUILD_RUNNER_JSON || '["ubuntu-latest"]') }}
     timeout-minutes: 720
+    permissions:
+      contents: read
+      packages: read
     strategy:
       max-parallel: 2
       matrix:
@@ -212,6 +221,7 @@ jobs:
     timeout-minutes: 120
     permissions:
       contents: write
+      packages: read
     container:
       image: ghcr.io/${{ vars.GHCR_OWNER || 'kosenkovpro' }}/bsys6:release
       credentials:
