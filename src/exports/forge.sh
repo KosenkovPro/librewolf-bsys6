@@ -39,9 +39,12 @@ forge_auth_header() {
 }
 
 # forge_api_get <path> [token]
+# Without a token the request is anonymous, the api of github answers that
+# with a low limit. $FORGE_TOKEN is used when it is set.
 forge_api_get() {
-  if [ -n "${2:-}" ]; then
-    curl -fsSL -H "$(forge_auth_header "$2")" -H "Accept: application/json" "$(forge_api_base)$1"
+  token="${2:-${FORGE_TOKEN:-}}"
+  if [ -n "$token" ]; then
+    curl -fsSL -H "$(forge_auth_header "$token")" -H "Accept: application/json" "$(forge_api_base)$1"
   else
     curl -fsSL -H "Accept: application/json" "$(forge_api_base)$1"
   fi

@@ -38,7 +38,8 @@ jobs:
           set -euo pipefail
           # SC2068 and SC2145 are pre-existing findings of the upstream code in
           # run.sh and utils/ms_push_msix.sh, they are not part of this fork.
-          shellcheck -S error -e SC1090,SC1091,SC2068,SC2145 bsys6 $(find src -name '*.sh')
+          mapfile -t scripts < <(find src -name '*.sh')
+          shellcheck -S error -e SC1090,SC1091,SC2068,SC2145 bsys6 "${scripts[@]}"
 
   workflows:
     name: Workflow files
@@ -92,6 +93,7 @@ jobs:
           FORGE_REPO_OWNER: ${{ github.repository_owner }}
           FORGE_REPO: ${{ github.repository }}
           SOURCE_REPO: librewolf-source
+          FORGE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           export BSYS6="$PWD/src"
