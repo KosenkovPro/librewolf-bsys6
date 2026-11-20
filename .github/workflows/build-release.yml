@@ -99,9 +99,11 @@ jobs:
           persist-credentials: false
 
       - name: Fetch LFS objects
+        working-directory: ${{ github.workspace }}
         run: git lfs pull
 
       - name: Build Linux
+        working-directory: ${{ github.workspace }}
         env:
           ARCH: ${{ matrix.arch }}
           SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
@@ -152,9 +154,11 @@ jobs:
           persist-credentials: false
 
       - name: Fetch LFS objects
+        working-directory: ${{ github.workspace }}
         run: git lfs pull
 
       - name: Build MacOS
+        working-directory: ${{ github.workspace }}
         env:
           TARGET: macos
           ARCH: ${{ matrix.arch }}
@@ -211,9 +215,11 @@ jobs:
           persist-credentials: false
 
       - name: Fetch LFS objects
+        working-directory: ${{ github.workspace }}
         run: git lfs pull
 
       - name: Build Windows
+        working-directory: ${{ github.workspace }}
         env:
           TARGET: windows
           ARCH: ${{ matrix.arch }}
@@ -270,6 +276,7 @@ jobs:
           merge-multiple: true
 
       - name: Publish the release
+        working-directory: ${{ github.workspace }}
         env:
           FORGE_TYPE: github
           FORGE_URL: https://github.com
