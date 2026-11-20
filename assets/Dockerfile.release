@@ -4,7 +4,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends curl ca-certificates && \
-    curl -qfA "" --no-sessionid --proto =https --tlsv1.2 https://vcs.fi/api/packages/OSSign/debian/repository.key -o /etc/apt/keyrings/forgejo-OSSign.asc && \
+    curl -qfLA "" --no-sessionid --proto =https --tlsv1.2 https://vcs.fi/api/packages/OSSign/debian/repository.key -o /etc/apt/keyrings/forgejo-OSSign.asc && \
     echo "deb [signed-by=/etc/apt/keyrings/forgejo-OSSign.asc] https://vcs.fi/api/packages/OSSign/debian stable main" > /etc/apt/sources.list.d/forgejo.list && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
