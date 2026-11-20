@@ -9,13 +9,23 @@ on:
         default: false
         type: boolean
       platforms:
-        description: 'The platforms to build, comma separated (linux, windows, macos)'
+        description: 'The platforms to build'
         required: false
         default: 'linux,windows'
-      archs:
-        description: 'The architectures to build, comma separated (x86_64, arm64)'
+        type: choice
+        options:
+          - linux
+          - windows
+          - macos
+          - linux,windows
+      arch:
+        description: 'The architecture to build'
         required: false
         default: 'x86_64'
+        type: choice
+        options:
+          - x86_64
+          - arm64
       lto:
         description: 'Build with LTO'
         required: false
@@ -75,7 +85,7 @@ jobs:
     strategy:
       max-parallel: 2
       matrix:
-        arch: ${{ fromJSON(format('["%s"]', join(split(inputs.archs != '' && inputs.archs || 'x86_64', ','), '","'))) }}
+        arch: ["${{ inputs.arch }}"]
     container:
       image: ghcr.io/${{ vars.GHCR_OWNER || 'kosenkovpro' }}/bsys6:linux
       credentials:
@@ -128,7 +138,7 @@ jobs:
     strategy:
       max-parallel: 2
       matrix:
-        arch: ${{ fromJSON(format('["%s"]', join(split(inputs.archs != '' && inputs.archs || 'x86_64', ','), '","'))) }}
+        arch: ["${{ inputs.arch }}"]
     container:
       image: ghcr.io/${{ vars.GHCR_OWNER || 'kosenkovpro' }}/bsys6:macos
       credentials:
@@ -187,7 +197,7 @@ jobs:
     strategy:
       max-parallel: 2
       matrix:
-        arch: ${{ fromJSON(format('["%s"]', join(split(inputs.archs != '' && inputs.archs || 'x86_64', ','), '","'))) }}
+        arch: ["${{ inputs.arch }}"]
     container:
       image: ghcr.io/${{ vars.GHCR_OWNER || 'kosenkovpro' }}/bsys6:windows
       credentials:
