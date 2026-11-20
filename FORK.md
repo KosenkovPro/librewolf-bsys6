@@ -90,9 +90,10 @@ archive from a GitHub release instead of the package registry.
   instead, the automatic updates of an installed LibreWolf still point at the upstream CDN.
 * The package registry of the forge has no equivalent for a personal GitHub account, the
   release assets take its place.
-* A full Firefox build needs about 100 GB of disk and a lot of CPU time. The standard
-  GitHub runners have about 14 GB, so the build jobs need a bigger runner — set
-  `BUILD_RUNNER_JSON` to a self-hosted or a larger runner.
+* A full Firefox build needs a lot of CPU time. The standard GitHub runners have four
+  cores and 16 GB of RAM, the build fits on their disk (145 GB) but takes many hours
+  and can run into the timeout of the job. Set `BUILD_RUNNER_JSON` to a self-hosted or
+  a larger runner to make it faster.
 
 ### The upstream workflows that are not ported
 

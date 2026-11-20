@@ -59,9 +59,10 @@ the release assets take the place of both. The Dockerfiles in [`assets/`](./asse
 `SOURCE_URL` build argument, so the images fetch the source archive from a GitHub release
 instead of the package registry.
 
-A full Firefox build needs about 100 GB of disk, so the build jobs expect a bigger runner
-— set the repository variable `BUILD_RUNNER_JSON` to a self-hosted or a larger runner. The
-details are in [`FORK.md`](./FORK.md).
+A full Firefox build needs a lot of CPU time: the standard runners have four cores, so
+the build fits on their disk but takes many hours. Set the repository variable
+`BUILD_RUNNER_JSON` to a self-hosted or a larger runner to make it faster. The details
+are in [`FORK.md`](./FORK.md).
 
 Development of the build system continues here.
 
