@@ -75,7 +75,7 @@ jobs:
     strategy:
       max-parallel: 2
       matrix:
-        arch: ${{ fromJSON(inputs.archs || '["x86_64"]') }}
+        arch: ${{ fromJSON(format('["%s"]', join(split(inputs.archs != '' && inputs.archs || 'x86_64', ','), '","'))) }}
     container:
       image: ghcr.io/${{ vars.GHCR_OWNER || 'kosenkovpro' }}/bsys6:linux
       credentials:
@@ -128,7 +128,7 @@ jobs:
     strategy:
       max-parallel: 2
       matrix:
-        arch: ${{ fromJSON(inputs.archs || '["x86_64"]') }}
+        arch: ${{ fromJSON(format('["%s"]', join(split(inputs.archs != '' && inputs.archs || 'x86_64', ','), '","'))) }}
     container:
       image: ghcr.io/${{ vars.GHCR_OWNER || 'kosenkovpro' }}/bsys6:macos
       credentials:
@@ -187,7 +187,7 @@ jobs:
     strategy:
       max-parallel: 2
       matrix:
-        arch: ${{ fromJSON(inputs.archs || '["x86_64"]') }}
+        arch: ${{ fromJSON(format('["%s"]', join(split(inputs.archs != '' && inputs.archs || 'x86_64', ','), '","'))) }}
     container:
       image: ghcr.io/${{ vars.GHCR_OWNER || 'kosenkovpro' }}/bsys6:windows
       credentials:
