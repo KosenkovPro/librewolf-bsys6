@@ -8,6 +8,14 @@ on:
         required: false
         default: false
         type: boolean
+      platforms:
+        description: 'The platforms to build, comma separated (linux, windows, macos)'
+        required: false
+        default: 'linux,windows'
+      archs:
+        description: 'The architectures to build, comma separated (x86_64, arm64)'
+        required: false
+        default: 'x86_64'
       lto:
         description: 'Build with LTO'
         required: false
@@ -58,6 +66,7 @@ jobs:
 
   build_linux:
     needs: [resolve_version]
+    if: contains(inputs.platforms, 'linux')
     runs-on: ${{ fromJSON(vars.BUILD_RUNNER_JSON || '["ubuntu-latest"]') }}
     timeout-minutes: 720
     permissions:
@@ -66,7 +75,7 @@ jobs:
     strategy:
       max-parallel: 2
       matrix:
-        arch: [x86_64, arm64]
+        arch: ${{ fromJSON(inputs.archs || '["x86_64"]') }}
     container:
       image: ghcr.io/${{ vars.GHCR_OWNER || 'kosenkovpro' }}/bsys6:linux
       credentials:
@@ -110,6 +119,7 @@ jobs:
 
   build_macos:
     needs: [resolve_version]
+    if: contains(inputs.platforms, 'macos')
     runs-on: ${{ fromJSON(vars.BUILD_RUNNER_JSON || '["ubuntu-latest"]') }}
     timeout-minutes: 720
     permissions:
@@ -118,7 +128,7 @@ jobs:
     strategy:
       max-parallel: 2
       matrix:
-        arch: [x86_64, arm64]
+        arch: ${{ fromJSON(inputs.archs || '["x86_64"]') }}
     container:
       image: ghcr.io/${{ vars.GHCR_OWNER || 'kosenkovpro' }}/bsys6:macos
       credentials:
@@ -168,6 +178,7 @@ jobs:
 
   build_windows:
     needs: [resolve_version]
+    if: contains(inputs.platforms, 'windows')
     runs-on: ${{ fromJSON(vars.BUILD_RUNNER_JSON || '["ubuntu-latest"]') }}
     timeout-minutes: 720
     permissions:
@@ -176,7 +187,7 @@ jobs:
     strategy:
       max-parallel: 2
       matrix:
-        arch: [x86_64, arm64]
+        arch: ${{ fromJSON(inputs.archs || '["x86_64"]') }}
     container:
       image: ghcr.io/${{ vars.GHCR_OWNER || 'kosenkovpro' }}/bsys6:windows
       credentials:
@@ -224,7 +235,9 @@ jobs:
 
   publish_release:
     needs: [resolve_version, build_linux, build_windows, build_macos]
-    if: inputs.release
+    # The jobs of the platforms that were not built are skipped, the release
+    # still has to be published with the artifacts that were built.
+    if: always() && inputs.release && needs.resolve_version.result == 'success' && needs.build_linux.result != 'failure' && needs.build_windows.result != 'failure' && needs.build_macos.result != 'failure'
     runs-on: ${{ fromJSON(vars.BUILD_RUNNER_JSON || '["ubuntu-latest"]') }}
     timeout-minutes: 120
     permissions:
