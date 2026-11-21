@@ -10,7 +10,7 @@ permissions:
 jobs:
   wine:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     container:
       image: ghcr.io/kosenkovpro/bsys6:windows
       credentials:
@@ -19,25 +19,31 @@ jobs:
     env:
       WINEPREFIX: /root/.wine
     steps:
-      - name: Inspect the system
-        run: |
-          uname -a
-          timeout 30 /root/.mozbuild/wine/bin/wine --version 2>&1 | head -3
-          docker version --format '{{.Server.APIVersion}}' 2>&1 | head -2
+      - name: Checkout the shaders
+        uses: actions/checkout@v4
+        with:
+          repository: KosenkovPro/librewolf-source
+          ref: main
+          sparse-checkout: |
+            gfx/layers/d3d11
+          sparse-checkout-cone-mode: false
+          path: src
 
       - name: Run wine
         run: |
+          uname -a
+          timeout 30 /root/.mozbuild/wine/bin/wine --version 2>&1 | head -3
           echo "--- wine cmd ---"
           timeout 60 /root/.mozbuild/wine/bin/wine cmd /c echo hello > /tmp/wine.log 2>&1
           echo "exit=$?"
-          cat /tmp/wine.log | head -20
+          head -5 /tmp/wine.log
 
-      - name: Compile a shader
+      - name: Compile the shader of the build
         run: |
-          cd /tmp
-          printf 'float4 LayerQuadVS(float4 aPosition : POSITION) : POSITION { return aPosition; }\n' > t.hlsl
-          echo "--- fxc2 with native d3dcompiler ---"
-          WINEDLLOVERRIDES=d3dcompiler_47=n timeout 120 /root/.mozbuild/wine/bin/wine /root/.mozbuild/fxc2/bin/fxc2.exe -nologo -Tvs_4_0_level_9_3 t.hlsl -ELayerQuadVS -VnLayerQuadVS -Vi -DVERTEX_SHADER -Fhout.h > /tmp/fxc.log 2>&1
+          cd /__w/librewolf-source/librewolf-source/src/gfx/layers/d3d11
+          ls -l CompositorD3D11.hlsl BlendShaderConstants.h
+          echo "--- fxc2 ---"
+          WINEDLLOVERRIDES=d3dcompiler_47=n timeout 120 /root/.mozbuild/wine/bin/wine /root/.mozbuild/fxc2/bin/fxc2.exe -nologo -Tvs_4_0_level_9_3 CompositorD3D11.hlsl -ELayerQuadVS -VnLayerQuadVS -Vi -DVERTEX_SHADER -Fhout.h > /tmp/fxc.log 2>&1
           echo "exit=$?"
-          cat /tmp/fxc.log | head -20
+          head -20 /tmp/fxc.log
           ls -l out.h 2>&1

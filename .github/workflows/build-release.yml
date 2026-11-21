@@ -158,7 +158,9 @@ jobs:
   build_macos:
     needs: [resolve_version]
     if: contains(inputs.platforms, 'macos')
-    runs-on: ${{ fromJSON(vars.BUILD_RUNNER_JSON || '["ubuntu-latest"]') }}
+    # The cross builds need wine. The docker of the ubuntu-latest runners
+    # blocks a syscall that wine needs, so they run on an older image.
+    runs-on: ${{ fromJSON(vars.CROSS_BUILD_RUNNER_JSON || '["ubuntu-24.04"]') }}
     timeout-minutes: 720
     permissions:
       contents: read
@@ -242,7 +244,9 @@ jobs:
   build_windows:
     needs: [resolve_version]
     if: contains(inputs.platforms, 'windows')
-    runs-on: ${{ fromJSON(vars.BUILD_RUNNER_JSON || '["ubuntu-latest"]') }}
+    # The cross builds need wine. The docker of the ubuntu-latest runners
+    # blocks a syscall that wine needs, so they run on an older image.
+    runs-on: ${{ fromJSON(vars.CROSS_BUILD_RUNNER_JSON || '["ubuntu-24.04"]') }}
     timeout-minutes: 720
     permissions:
       contents: read
