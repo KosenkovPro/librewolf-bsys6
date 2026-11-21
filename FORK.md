@@ -94,18 +94,24 @@ The rust part of a release build is compiled with link time optimization
 (`-Clto`, `-Cembed-bitcode=yes`, `-C codegen-units=1`, `-C debuginfo=2`). The
 compiler of a big crate such as `gkrust` needs more memory than the 16 GB of a
 standard runner, and the kernel kills it without a trace (`signal: 9, SIGKILL`).
-Two things keep the build alive:
+Three things keep the build alive:
 
 * The build jobs run the container with `--privileged` and add a swap file of
   8 GB before the build starts. The file has to be in the workspace: it is a
   bind mount of a real file system, the overlay of the container cannot hold
-  swap.
-* The `JOBS` variable limits the number of parallel compilations to two. The
-  compiler of the rust code is the one that needs the memory, the C++ compiler
-  is satisfied with much less. The variable is passed to `mach build -j`.
+  swap. The swap is a last resort, `vm.swappiness` is set to zero, a runner
+  that swaps on its own loses the connection to the server.
+* The `JOBS` variable limits the number of parallel compilations. The compiler
+  of the rust code is the one that needs the memory, the C++ compiler is
+  satisfied with much less. The variable is passed to `mach build -j`. The
+  cross build of the Windows target is the heaviest one and runs with a single
+  job.
+* The `RUSTFLAGS` variable holds `-Cdebuginfo=0`. The debug information of the
+  rust code is dropped, the release packages hold the stripped binaries anyway,
+  but the compiler needs much less memory for it.
 
-Without these two the build dies after about half an hour, in the rust code of
-the release.
+Without these the build dies after about half an hour, in the rust code of the
+release.
 
 ### Repository settings
 

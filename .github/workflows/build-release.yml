@@ -141,6 +141,10 @@ jobs:
           chmod 600 "$swapfile"
           mkswap "$swapfile"
           swapon "$swapfile"
+          # The swap is a last resort, the page cache of the runner is worth
+          # more than it. Swapping on its own starves the runner process and
+          # it loses the connection to the server.
+          sysctl -w vm.swappiness=0 || true
           grep -E "MemTotal|MemAvailable|SwapTotal" /proc/meminfo
 
       - name: Fetch LFS objects
@@ -155,6 +159,10 @@ jobs:
           # optimization, the compiler needs a lot of memory for it and the
           # runner has 16 GB of it.
           JOBS: '2'
+          # The debug information of the rust code is dropped. The release
+          # packages hold the stripped binaries, so nothing is lost, but the
+          # compiler needs much less memory for it.
+          RUSTFLAGS: '-Cdebuginfo=0'
           SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
           LTO: ${{ inputs.lto }}
           VERSION: ${{ needs.resolve_version.outputs.version }}
@@ -245,6 +253,10 @@ jobs:
           chmod 600 "$swapfile"
           mkswap "$swapfile"
           swapon "$swapfile"
+          # The swap is a last resort, the page cache of the runner is worth
+          # more than it. Swapping on its own starves the runner process and
+          # it loses the connection to the server.
+          sysctl -w vm.swappiness=0 || true
           grep -E "MemTotal|MemAvailable|SwapTotal" /proc/meminfo
 
       - name: Fetch LFS objects
@@ -260,6 +272,10 @@ jobs:
           # optimization, the compiler needs a lot of memory for it and the
           # runner has 16 GB of it.
           JOBS: '2'
+          # The debug information of the rust code is dropped. The release
+          # packages hold the stripped binaries, so nothing is lost, but the
+          # compiler needs much less memory for it.
+          RUSTFLAGS: '-Cdebuginfo=0'
           SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
           LTO: ${{ inputs.lto }}
           MACOS_SIGNING_P12: ${{ inputs.sign_macos && secrets.MACOS_SIGNING_P12 || '' }}
@@ -355,6 +371,10 @@ jobs:
           chmod 600 "$swapfile"
           mkswap "$swapfile"
           swapon "$swapfile"
+          # The swap is a last resort, the page cache of the runner is worth
+          # more than it. Swapping on its own starves the runner process and
+          # it loses the connection to the server.
+          sysctl -w vm.swappiness=0 || true
           grep -E "MemTotal|MemAvailable|SwapTotal" /proc/meminfo
 
       - name: Fetch LFS objects
@@ -366,10 +386,15 @@ jobs:
         env:
           TARGET: windows
           ARCH: ${{ matrix.arch }}
-          # The rust code of the release build is compiled with link time
-          # optimization, the compiler needs a lot of memory for it and the
-          # runner has 16 GB of it.
-          JOBS: '2'
+          # The cross build of the windows target is the heaviest one, the
+          # compiler of the rust code and the compiler of the C++ code run
+          # together. One job at a time keeps the memory of the runner free
+          # for the runner process itself.
+          JOBS: '1'
+          # The debug information of the rust code is dropped. The release
+          # packages hold the stripped binaries, so nothing is lost, but the
+          # compiler needs much less memory for it.
+          RUSTFLAGS: '-Cdebuginfo=0'
           SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
           LTO: ${{ inputs.lto }}
           OSSIGN_CONFIG: ${{ secrets.OSSIGN_CONFIG }}
