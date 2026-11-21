@@ -11,7 +11,13 @@ echo "v$VERSION -> v$CHOCO_VERSION"
 tmpdir=$(mktemp -d)
 echo "tmpdir is $tmpdir"
 mkdir -p "$tmpdir/tools"
-export CHOCO_FILE="https://dl.librewolf.net/librewolf/$FULL_VERSION/$(basename "$SETUP")"
+if [ "$FORGE_TYPE" == "github" ]; then
+  # The installer is an asset of the release, there is no download bucket.
+  source $BSYS6/exports/forge.sh
+  export CHOCO_FILE="$(forge_asset_url "$FORGE_REPO_NAME" "$FULL_VERSION" "$(basename "$SETUP")")"
+else
+  export CHOCO_FILE="https://dl.librewolf.net/librewolf/$FULL_VERSION/$(basename "$SETUP")"
+fi
 export CHOCO_CHECKSUM="$(cat "$SETUP_SHA256")"
 envsubst '$CHOCO_VERSION' \
   <"$BSYS6/../assets/choco/librewolf.nuspec.in" \
