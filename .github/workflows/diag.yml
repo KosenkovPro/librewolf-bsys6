@@ -18,16 +18,19 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
     env:
       WINEPREFIX: /root/.wine
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - name: Checkout the shaders
-        uses: actions/checkout@v4
-        with:
-          repository: KosenkovPro/librewolf-source
-          ref: main
-          sparse-checkout: |
-            gfx/layers/d3d11
-          sparse-checkout-cone-mode: false
-          path: src
+      - name: Get the shaders
+        run: |
+          set -e
+          mkdir -p /tmp/shader
+          cd /tmp/shader
+          for file in CompositorD3D11.hlsl BlendShaderConstants.h; do
+            curl -fsSL -H "Authorization: Bearer $GH_TOKEN" \
+              "https://api.github.com/repos/KosenkovPro/librewolf-source/contents/gfx/layers/d3d11/$file?ref=main" |
+              jq -r '.content' | base64 -d > "$file"
+            ls -l "$file"
+          done
 
       - name: Run wine
         run: |
@@ -40,8 +43,7 @@ jobs:
 
       - name: Compile the shader of the build
         run: |
-          cd "$GITHUB_WORKSPACE/src/gfx/layers/d3d11"
-          ls -l CompositorD3D11.hlsl BlendShaderConstants.h
+          cd /tmp/shader
           echo "--- fxc2 ---"
           WINEDLLOVERRIDES=d3dcompiler_47=n timeout 120 /root/.mozbuild/wine/bin/wine /root/.mozbuild/fxc2/bin/fxc2.exe -nologo -Tvs_4_0_level_9_3 CompositorD3D11.hlsl -ELayerQuadVS -VnLayerQuadVS -Vi -DVERTEX_SHADER -Fhout.h > /tmp/fxc.log 2>&1
           echo "exit=$?"
@@ -54,16 +56,15 @@ jobs:
     steps:
       - name: Check the downloads of the packaging
         run: |
-          for repo in winupdater portable; do
+          for repo in WinUpdater Portable; do
             echo "=== $repo ==="
-            tag="$(curl -fsSL "https://librewolf.dev/api/v1/repos/librewolf/$repo/releases/latest" | jq -r '.tag_name // empty')"
+            lower="$(echo "$repo" | tr '[:upper:]' '[:lower:]')"
+            tag="$(curl -fsSL "https://librewolf.dev/api/v1/repos/librewolf/$lower/releases/latest" | jq -r '.tag_name // empty')"
             echo "tag=$tag"
             version="${tag#v}"
-            url="https://dl.librewolf.net/librewolf-$repo/$version/LibreWolf-$(echo "$repo" | sed 's/^./\U&/')_${version}.zip"
+            url="https://dl.librewolf.net/librewolf-$lower/$version/LibreWolf-${repo}_${version}.zip"
             echo "url=$url"
             curl -fsSL -o /dev/null -w "http=%{http_code} size=%{size_download}\n" "$url" || echo "DOWNLOAD FAILED"
           done
-          echo "=== nsis ==="
-          ls -l /root/.mozbuild/nsis/bin/makensis 2>&1
-          echo "=== chocolatey ==="
-          ls -l /root/.mozbuild/chocolatey/choco 2>&1
+          echo "=== vc_redist ==="
+          curl -fsSL -o /dev/null -w "http=%{http_code}\n" "https://librewolf.dev/librewolf/vc_redist/releases/download/latest/vcredist.x64.exe" || echo "no vcredist at that path"
