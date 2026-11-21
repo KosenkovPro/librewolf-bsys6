@@ -36,14 +36,34 @@ jobs:
           echo "--- wine cmd ---"
           timeout 60 /root/.mozbuild/wine/bin/wine cmd /c echo hello > /tmp/wine.log 2>&1
           echo "exit=$?"
-          head -5 /tmp/wine.log
+          head -3 /tmp/wine.log
 
       - name: Compile the shader of the build
         run: |
-          cd /__w/librewolf-source/librewolf-source/src/gfx/layers/d3d11
+          cd "$GITHUB_WORKSPACE/src/gfx/layers/d3d11"
           ls -l CompositorD3D11.hlsl BlendShaderConstants.h
           echo "--- fxc2 ---"
           WINEDLLOVERRIDES=d3dcompiler_47=n timeout 120 /root/.mozbuild/wine/bin/wine /root/.mozbuild/fxc2/bin/fxc2.exe -nologo -Tvs_4_0_level_9_3 CompositorD3D11.hlsl -ELayerQuadVS -VnLayerQuadVS -Vi -DVERTEX_SHADER -Fhout.h > /tmp/fxc.log 2>&1
           echo "exit=$?"
           head -20 /tmp/fxc.log
           ls -l out.h 2>&1
+
+  downloads:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check the downloads of the packaging
+        run: |
+          for repo in winupdater portable; do
+            echo "=== $repo ==="
+            tag="$(curl -fsSL "https://librewolf.dev/api/v1/repos/librewolf/$repo/releases/latest" | jq -r '.tag_name // empty')"
+            echo "tag=$tag"
+            version="${tag#v}"
+            url="https://dl.librewolf.net/librewolf-$repo/$version/LibreWolf-$(echo "$repo" | sed 's/^./\U&/')_${version}.zip"
+            echo "url=$url"
+            curl -fsSL -o /dev/null -w "http=%{http_code} size=%{size_download}\n" "$url" || echo "DOWNLOAD FAILED"
+          done
+          echo "=== nsis ==="
+          ls -l /root/.mozbuild/nsis/bin/makensis 2>&1
+          echo "=== chocolatey ==="
+          ls -l /root/.mozbuild/chocolatey/choco 2>&1
