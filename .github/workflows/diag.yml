@@ -1,0 +1,62 @@
+name: Diagnose the container
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: ghcr.io/kosenkovpro/bsys6:windows
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    env:
+      WINEPREFIX: /root/.wine
+      MOZBUILD: /root/.mozbuild
+    steps:
+      - name: Inspect the system
+        run: |
+          echo "--- uname ---"
+          uname -a
+          echo "--- os ---"
+          cat /etc/os-release | head -3
+          echo "--- wine version ---"
+          /root/.mozbuild/wine/bin/wine --version 2>&1 | head -3
+          echo "exit=$?"
+          echo "--- python unix socket ---"
+          python3 -c "import socket; s=socket.socket(socket.AF_UNIX); print('unix socket ok')" 2>&1
+          echo "--- whoami / HOME ---"
+          id
+          echo "HOME=$HOME"
+          ls -ld "$HOME"
+
+      - name: Run wine
+        run: |
+          echo "--- wine cmd ---"
+          /root/.mozbuild/wine/bin/wine cmd /c echo hello 2>&1 | head -20
+          echo "exit=$?"
+
+      - name: Compile a shader
+        run: |
+          cd /tmp
+          cat > t.hlsl <<'EOF'
+float4 LayerQuadVS(float4 aPosition : POSITION) : POSITION
+{
+  return aPosition;
+}
+EOF
+          echo "--- fxc2 without overrides ---"
+          /root/.mozbuild/wine/bin/wine /root/.mozbuild/fxc2/bin/fxc2.exe -nologo -Tvs_4_0_level_9_3 t.hlsl -ELayerQuadVS -VnLayerQuadVS -Vi -DVERTEX_SHADER -Fhout.h 2>&1 | head -20
+          echo "exit=$?"
+          ls -l out.h 2>&1
+          echo "--- fxc2 with native d3dcompiler ---"
+          rm -f out.h
+          WINEDLLOVERRIDES=d3dcompiler_47=n /root/.mozbuild/wine/bin/wine /root/.mozbuild/fxc2/bin/fxc2.exe -nologo -Tvs_4_0_level_9_3 t.hlsl -ELayerQuadVS -VnLayerQuadVS -Vi -DVERTEX_SHADER -Fhout.h 2>&1 | head -20
+          echo "exit=$?"
+          ls -l out.h 2>&1
