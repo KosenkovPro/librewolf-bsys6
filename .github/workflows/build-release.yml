@@ -46,8 +46,10 @@ permissions:
   contents: read
 
 concurrency:
-  group: build-release
-  # A new build replaces the one that is running, it takes hours otherwise.
+  # A new build replaces the one that is running for the same platforms, it
+  # takes hours otherwise. The builds of different platforms do not cancel
+  # each other, they run on their own runners.
+  group: build-release-${{ inputs.platforms }}
   cancel-in-progress: true
 
 jobs:
