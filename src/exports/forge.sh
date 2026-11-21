@@ -105,8 +105,14 @@ forge_latest_tag() {
 # forge_release_exists <owner/repo> <tag>
 # Returns 0 when the release exists, non-zero otherwise.
 forge_release_exists() {
-  curl -fs -o /dev/null -H "Accept: application/json" \
-    "$(forge_api_base)/repos/$1/releases/tags/$2"
+  if [ -n "${FORGE_TOKEN:-}" ]; then
+    curl -fs -o /dev/null -H "Accept: application/json" \
+      -H "$(forge_auth_header "$FORGE_TOKEN")" \
+      "$(forge_api_base)/repos/$1/releases/tags/$2" 2>/dev/null
+  else
+    curl -fs -o /dev/null -H "Accept: application/json" \
+      "$(forge_api_base)/repos/$1/releases/tags/$2" 2>/dev/null
+  fi
 }
 
 # forge_asset_url <repo> <tag> <asset>
