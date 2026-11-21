@@ -8,9 +8,9 @@ permissions:
   packages: read
 
 jobs:
-  system:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
+  wine:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
     container:
       image: ghcr.io/kosenkovpro/bsys6:windows
       credentials:
@@ -21,50 +21,23 @@ jobs:
     steps:
       - name: Inspect the system
         run: |
-          echo "--- uname ---"
           uname -a
-          echo "--- os ---"
-          cat /etc/os-release | head -3
-          echo "--- architecture ---"
-          dpkg --print-architecture
-          dpkg --print-foreign-architectures
-          echo "--- 32 bit support ---"
-          ls /lib/ld-linux.so.2 /lib32 2>&1 | head -5
-          echo "--- wine version ---"
           timeout 30 /root/.mozbuild/wine/bin/wine --version 2>&1 | head -3
-          echo "exit=$?"
-          echo "--- wine file ---"
-          file /root/.mozbuild/wine/bin/wine* 2>&1 | head -5
-          echo "--- python unix socket ---"
-          python3 -c "import socket; s=socket.socket(socket.AF_UNIX); print('unix socket ok')" 2>&1
-          echo "--- python socketpair ---"
-          python3 -c "import socket; a,b=socket.socketpair(); print('socketpair ok')" 2>&1
-          echo "--- tmp ---"
-          ls -ld /tmp /root /root/.wine 2>&1
-          echo "--- whoami / HOME ---"
-          id
-          echo "HOME=$HOME"
-          echo "--- limits ---"
-          cat /proc/sys/kernel/threads-max 2>&1
-          ulimit -a
+          docker version --format '{{.Server.APIVersion}}' 2>&1 | head -2
 
-  wine:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    container:
-      image: ghcr.io/kosenkovpro/bsys6:windows
-      credentials:
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-    env:
-      WINEPREFIX: /root/.wine
-    steps:
       - name: Run wine
         run: |
-          echo "--- wine cmd (60s timeout) ---"
-          timeout 60 /root/.mozbuild/wine/bin/wine cmd /c echo hello 2>&1 | head -30
+          echo "--- wine cmd ---"
+          timeout 60 /root/.mozbuild/wine/bin/wine cmd /c echo hello > /tmp/wine.log 2>&1
           echo "exit=$?"
-          echo "--- prefix content ---"
-          ls -la /root/.wine 2>&1 | head -20
-          echo "--- wine processes ---"
-          ps aux | head -20
+          cat /tmp/wine.log | head -20
+
+      - name: Compile a shader
+        run: |
+          cd /tmp
+          printf 'float4 LayerQuadVS(float4 aPosition : POSITION) : POSITION { return aPosition; }\n' > t.hlsl
+          echo "--- fxc2 with native d3dcompiler ---"
+          WINEDLLOVERRIDES=d3dcompiler_47=n timeout 120 /root/.mozbuild/wine/bin/wine /root/.mozbuild/fxc2/bin/fxc2.exe -nologo -Tvs_4_0_level_9_3 t.hlsl -ELayerQuadVS -VnLayerQuadVS -Vi -DVERTEX_SHADER -Fhout.h > /tmp/fxc.log 2>&1
+          echo "exit=$?"
+          cat /tmp/fxc.log | head -20
+          ls -l out.h 2>&1
