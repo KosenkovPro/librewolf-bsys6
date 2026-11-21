@@ -47,7 +47,8 @@ permissions:
 
 concurrency:
   group: build-release
-  cancel-in-progress: false
+  # A new build replaces the one that is running, it takes hours otherwise.
+  cancel-in-progress: true
 
 jobs:
   resolve_version:
@@ -118,6 +119,9 @@ jobs:
           echo "PATH=/root/.cargo/bin:$PATH" >> "$GITHUB_ENV"
           echo "CARGO_HOME=/root/.cargo" >> "$GITHUB_ENV"
           echo "RUSTUP_HOME=/root/.rustup" >> "$GITHUB_ENV"
+          # Wine refuses to create its prefix in a directory that belongs to
+          # another user, the home directory of the runner belongs to it.
+          echo "WINEPREFIX=/root/.wine" >> "$GITHUB_ENV"
 
       - name: Fetch LFS objects
         working-directory: /__w/${{ github.event.repository.name }}/${{ github.event.repository.name }}
@@ -193,6 +197,9 @@ jobs:
           echo "PATH=/root/.cargo/bin:$PATH" >> "$GITHUB_ENV"
           echo "CARGO_HOME=/root/.cargo" >> "$GITHUB_ENV"
           echo "RUSTUP_HOME=/root/.rustup" >> "$GITHUB_ENV"
+          # Wine refuses to create its prefix in a directory that belongs to
+          # another user, the home directory of the runner belongs to it.
+          echo "WINEPREFIX=/root/.wine" >> "$GITHUB_ENV"
 
       - name: Fetch LFS objects
         working-directory: /__w/${{ github.event.repository.name }}/${{ github.event.repository.name }}
@@ -274,6 +281,9 @@ jobs:
           echo "PATH=/root/.cargo/bin:$PATH" >> "$GITHUB_ENV"
           echo "CARGO_HOME=/root/.cargo" >> "$GITHUB_ENV"
           echo "RUSTUP_HOME=/root/.rustup" >> "$GITHUB_ENV"
+          # Wine refuses to create its prefix in a directory that belongs to
+          # another user, the home directory of the runner belongs to it.
+          echo "WINEPREFIX=/root/.wine" >> "$GITHUB_ENV"
 
       - name: Fetch LFS objects
         working-directory: /__w/${{ github.event.repository.name }}/${{ github.event.repository.name }}
@@ -348,6 +358,9 @@ jobs:
           echo "PATH=/root/.cargo/bin:$PATH" >> "$GITHUB_ENV"
           echo "CARGO_HOME=/root/.cargo" >> "$GITHUB_ENV"
           echo "RUSTUP_HOME=/root/.rustup" >> "$GITHUB_ENV"
+          # Wine refuses to create its prefix in a directory that belongs to
+          # another user, the home directory of the runner belongs to it.
+          echo "WINEPREFIX=/root/.wine" >> "$GITHUB_ENV"
 
       - name: Download the artifacts
         uses: actions/download-artifact@v4
