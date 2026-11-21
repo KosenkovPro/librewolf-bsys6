@@ -93,6 +93,7 @@ The images carry the same values as `ENV`, so they also work on their own.
 | Name | Kind | Purpose |
 | --- | --- | --- |
 | `BUILD_RUNNER_JSON` | variable | The runner for the build jobs, for example `["self-hosted","linux","x64"]`. Defaults to `["ubuntu-latest"]`. |
+| `CROSS_BUILD_RUNNER_JSON` | variable | The runner for the Windows and macOS builds. They cross compile and need wine, and the docker of the `ubuntu-latest` runners blocks a syscall that wine needs ([runner-images#14790](https://github.com/actions/runner-images/issues/14790)). Defaults to `["ubuntu-24.04"]`. |
 | `GHCR_OWNER` | variable | The owner of the images in the container registry. Defaults to `kosenkovpro`. |
 | `SIGNING_KEY` | secret | The GPG key used to sign the artifacts. |
 | `CHOCO_API_KEY` | secret | The Chocolatey API key, without it the Chocolatey push is skipped. |
