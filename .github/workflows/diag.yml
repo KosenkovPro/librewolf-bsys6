@@ -29,13 +29,21 @@ jobs:
             curl -fsSL -H "Authorization: Bearer $GH_TOKEN" \
               "https://api.github.com/repos/KosenkovPro/librewolf-source/contents/gfx/layers/d3d11/$file?ref=main" |
               jq -r '.content' | base64 -d > "$file"
-            ls -l "$file"
           done
+          ls -l
+
+      - name: Inspect the tools
+        run: |
+          echo "--- fxc2 files ---"
+          file /root/.mozbuild/fxc2/bin/*
+          echo "--- wine files ---"
+          ls /root/.mozbuild/wine/bin/
+          file /root/.mozbuild/wine/bin/wine
+          echo "--- native libraries next to fxc2 ---"
+          find /root/.mozbuild/fxc2 -type f | head -20
 
       - name: Run wine
         run: |
-          uname -a
-          timeout 30 /root/.mozbuild/wine/bin/wine --version 2>&1 | head -3
           echo "--- wine cmd ---"
           timeout 60 /root/.mozbuild/wine/bin/wine cmd /c echo hello > /tmp/wine.log 2>&1
           echo "exit=$?"
@@ -44,27 +52,18 @@ jobs:
       - name: Compile the shader of the build
         run: |
           cd /tmp/shader
-          echo "--- fxc2 ---"
+          echo "--- fxc2 with the native d3dcompiler ---"
+          set +e
           WINEDLLOVERRIDES=d3dcompiler_47=n timeout 120 /root/.mozbuild/wine/bin/wine /root/.mozbuild/fxc2/bin/fxc2.exe -nologo -Tvs_4_0_level_9_3 CompositorD3D11.hlsl -ELayerQuadVS -VnLayerQuadVS -Vi -DVERTEX_SHADER -Fhout.h > /tmp/fxc.log 2>&1
           echo "exit=$?"
-          head -20 /tmp/fxc.log
+          cat /tmp/fxc.log
           ls -l out.h 2>&1
-
-  downloads:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - name: Check the downloads of the packaging
-        run: |
-          for repo in WinUpdater Portable; do
-            echo "=== $repo ==="
-            lower="$(echo "$repo" | tr '[:upper:]' '[:lower:]')"
-            tag="$(curl -fsSL "https://librewolf.dev/api/v1/repos/librewolf/$lower/releases/latest" | jq -r '.tag_name // empty')"
-            echo "tag=$tag"
-            version="${tag#v}"
-            url="https://dl.librewolf.net/librewolf-$lower/$version/LibreWolf-${repo}_${version}.zip"
-            echo "url=$url"
-            curl -fsSL -o /dev/null -w "http=%{http_code} size=%{size_download}\n" "$url" || echo "DOWNLOAD FAILED"
-          done
-          echo "=== vc_redist ==="
-          curl -fsSL -o /dev/null -w "http=%{http_code}\n" "https://librewolf.dev/librewolf/vc_redist/releases/download/latest/vcredist.x64.exe" || echo "no vcredist at that path"
+          echo "--- fxc2 without the override ---"
+          timeout 120 /root/.mozbuild/wine/bin/wine /root/.mozbuild/fxc2/bin/fxc2.exe -nologo -Tvs_4_0_level_9_3 CompositorD3D11.hlsl -ELayerQuadVS -VnLayerQuadVS -Vi -DVERTEX_SHADER -Fhout2.h > /tmp/fxc2.log 2>&1
+          echo "exit=$?"
+          cat /tmp/fxc2.log
+          ls -l out2.h 2>&1
+          echo "--- wine debug ---"
+          WINEDEBUG=+loaddll timeout 60 /root/.mozbuild/wine/bin/wine /root/.mozbuild/fxc2/bin/fxc2.exe -nologo -Tvs_4_0_level_9_3 CompositorD3D11.hlsl -ELayerQuadVS -VnLayerQuadVS -Vi -DVERTEX_SHADER -Fhout3.h > /tmp/fxc3.log 2>&1
+          echo "exit=$?"
+          grep -iE "d3dcompiler|err:|failed" /tmp/fxc3.log | head -20
