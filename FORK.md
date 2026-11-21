@@ -73,6 +73,21 @@ that are not mirrored into this fork (`winupdater`, `vc_redist`, ...).
 The Dockerfiles take a `SOURCE_URL` build argument, so the images can fetch the source
 archive from a GitHub release instead of the package registry.
 
+### The environment inside the container
+
+GitHub Actions overrides `HOME` in the container jobs: it points to `/github/home`
+and not to the `/root` the images were built with. The tools of the build system
+live in the home directory of the image, so the workflows give their paths explicitly:
+
+| Variable | Value | What it holds |
+| --- | --- | --- |
+| `MOZBUILD` | `/root/.mozbuild` | the toolchain of the compiler, the Windows SDK, chocolatey |
+| `MOZBUILD_STATE_PATH` | `/root/.mozbuild` | the state directory of `mach`, it looks for the compiler there |
+| `CARGO_HOME`, `RUSTUP_HOME` | `/root/.cargo`, `/root/.rustup` | the Rust compiler |
+| `GIT_CONFIG_COUNT`, `GIT_CONFIG_KEY_0`, `GIT_CONFIG_VALUE_0` | `safe.directory` | the repository belongs to the runner, the container works as root |
+
+The images carry the same values as `ENV`, so they also work on their own.
+
 ### Repository settings
 
 | Name | Kind | Purpose |
