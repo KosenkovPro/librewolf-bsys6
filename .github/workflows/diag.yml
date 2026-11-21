@@ -45,12 +45,7 @@ jobs:
       - name: Compile a shader
         run: |
           cd /tmp
-          cat > t.hlsl <<'EOF'
-float4 LayerQuadVS(float4 aPosition : POSITION) : POSITION
-{
-  return aPosition;
-}
-EOF
+          printf 'float4 LayerQuadVS(float4 aPosition : POSITION) : POSITION { return aPosition; }\n' > t.hlsl
           echo "--- fxc2 without overrides ---"
           /root/.mozbuild/wine/bin/wine /root/.mozbuild/fxc2/bin/fxc2.exe -nologo -Tvs_4_0_level_9_3 t.hlsl -ELayerQuadVS -VnLayerQuadVS -Vi -DVERTEX_SHADER -Fhout.h 2>&1 | head -20
           echo "exit=$?"
