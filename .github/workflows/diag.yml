@@ -8,62 +8,33 @@ permissions:
   packages: read
 
 jobs:
-  wine:
+  swap:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 15
     container:
-      image: ghcr.io/kosenkovpro/bsys6:windows
+      image: ghcr.io/kosenkovpro/bsys6:linux
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
-    env:
-      WINEPREFIX: /root/.wine
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      options: --privileged
     steps:
-      - name: Get the shaders
+      - name: Inspect the memory
         run: |
-          set -e
-          mkdir -p /tmp/shader
-          cd /tmp/shader
-          for file in CompositorD3D11.hlsl BlendShaderConstants.h; do
-            curl -fsSL -H "Authorization: Bearer $GH_TOKEN" \
-              "https://api.github.com/repos/KosenkovPro/librewolf-source/contents/gfx/layers/d3d11/$file?ref=main" |
-              jq -r '.content' | base64 -d > "$file"
-          done
-          ls -l
+          echo "--- memory ---"
+          free -h
+          echo "--- capabilities ---"
+          grep CapEff /proc/self/status
+          echo "--- filesystem of the workspace ---"
+          df -hT "$GITHUB_WORKSPACE" /tmp
+          mount | grep -E "on / |workspace" | head -5
 
-      - name: Inspect the tools
+      - name: Add swap space
         run: |
-          echo "--- fxc2 files ---"
-          file /root/.mozbuild/fxc2/bin/*
-          echo "--- wine files ---"
-          ls /root/.mozbuild/wine/bin/
-          file /root/.mozbuild/wine/bin/wine
-          echo "--- native libraries next to fxc2 ---"
-          find /root/.mozbuild/fxc2 -type f | head -20
-
-      - name: Run wine
-        run: |
-          echo "--- wine cmd ---"
-          timeout 60 /root/.mozbuild/wine/bin/wine cmd /c echo hello > /tmp/wine.log 2>&1
-          echo "exit=$?"
-          head -3 /tmp/wine.log
-
-      - name: Compile the shader of the build
-        run: |
-          cd /tmp/shader
-          echo "--- fxc2 with the native d3dcompiler ---"
-          set +e
-          WINEDLLOVERRIDES=d3dcompiler_47=n timeout 120 /root/.mozbuild/wine/bin/wine /root/.mozbuild/fxc2/bin/fxc2.exe -nologo -Tvs_4_0_level_9_3 CompositorD3D11.hlsl -ELayerQuadVS -VnLayerQuadVS -Vi -DVERTEX_SHADER -Fhout.h > /tmp/fxc.log 2>&1
-          echo "exit=$?"
-          cat /tmp/fxc.log
-          ls -l out.h 2>&1
-          echo "--- fxc2 without the override ---"
-          timeout 120 /root/.mozbuild/wine/bin/wine /root/.mozbuild/fxc2/bin/fxc2.exe -nologo -Tvs_4_0_level_9_3 CompositorD3D11.hlsl -ELayerQuadVS -VnLayerQuadVS -Vi -DVERTEX_SHADER -Fhout2.h > /tmp/fxc2.log 2>&1
-          echo "exit=$?"
-          cat /tmp/fxc2.log
-          ls -l out2.h 2>&1
-          echo "--- wine debug ---"
-          WINEDEBUG=+loaddll timeout 60 /root/.mozbuild/wine/bin/wine /root/.mozbuild/fxc2/bin/fxc2.exe -nologo -Tvs_4_0_level_9_3 CompositorD3D11.hlsl -ELayerQuadVS -VnLayerQuadVS -Vi -DVERTEX_SHADER -Fhout3.h > /tmp/fxc3.log 2>&1
-          echo "exit=$?"
-          grep -iE "d3dcompiler|err:|failed" /tmp/fxc3.log | head -20
+          set -x
+          swapfile="$GITHUB_WORKSPACE/swapfile"
+          fallocate -l 8G "$swapfile" || dd if=/dev/zero of="$swapfile" bs=1M count=8192 status=none
+          chmod 600 "$swapfile"
+          mkswap "$swapfile"
+          swapon "$swapfile" && echo "SWAP ENABLED"
+          free -h
+          swapon --show
