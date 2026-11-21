@@ -419,7 +419,7 @@ jobs:
             librewolf-*.zip
             librewolf-*.exe
             librewolf-*.msix
-            librewolf-*.nupkg.nupkg
+            librewolf-*.nupkg
             librewolf-*.mar
           retention-days: 7
           if-no-files-found: warn
