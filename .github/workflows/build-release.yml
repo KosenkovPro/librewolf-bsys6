@@ -183,7 +183,7 @@ jobs:
             librewolf-*.rpm
             librewolf-*.deb
             librewolf-*.AppImage
-            librewolf-*.AppImage.zsync
+            librewolf-*.zsync
           retention-days: 7
           if-no-files-found: warn
 
