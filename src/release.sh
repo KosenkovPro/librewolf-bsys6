@@ -28,7 +28,7 @@ if [ "$abort" == "true" ]; then
 fi
 
 if [ "$FORGE_TYPE" == "github" ]; then
-  if forge_release_exists "$FORGE_REPO" "$FULL_VERSION"; then
+  if forge_release_exists "$FORGE_REPO_OWNER/$FORGE_REPO" "$FULL_VERSION"; then
     echo "Error: Release $FULL_VERSION already exists on $FORGE_URL" >&2
     exit 1
   fi
@@ -254,7 +254,7 @@ github_create_release() {
     --header "$(forge_auth_header "$FORGE_TOKEN")" \
     --data "$body" \
     --request POST \
-    "$(forge_api_base)/repos/$FORGE_REPO/releases")
+    "$(forge_api_base)/repos/$FORGE_REPO_OWNER/$FORGE_REPO/releases")
 
   release_id=$(echo "$api_response" | jq -r '.id // empty')
   if [ -z "$release_id" ]; then
@@ -266,7 +266,7 @@ github_create_release() {
   upload_url=$(echo "$api_response" | jq -r '.upload_url // empty')
   upload_url="${upload_url%%\{*}"
   if [ -z "$upload_url" ]; then
-    upload_url="https://uploads.github.com/repos/$FORGE_REPO/releases/$release_id/assets"
+    upload_url="https://uploads.github.com/repos/$FORGE_REPO_OWNER/$FORGE_REPO/releases/$release_id/assets"
   fi
 
   echo "--> Release created with ID: $release_id" >&2
