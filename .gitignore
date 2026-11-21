@@ -1,4 +1,6 @@
 /env.sh
+# The signing keys of the fork live here, they are never in the repository.
+/.secret/
 /*.exe
 /*.tar.*
 /*.sha256sum

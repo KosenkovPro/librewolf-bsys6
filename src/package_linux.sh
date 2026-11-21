@@ -238,7 +238,9 @@ echo "-> Running fpm"
 
 if [ -n "${SIGNING_KEY_FPR:-}" ] && command -v dpkg-sig &>/dev/null; then
   echo "-> Signing the DEB" >&2
-  dpkg-sig --sign builder "$outpkg"
+  # The key is named by its fingerprint, the name of the user id of the key is
+  # not fixed and the key of the fork is not the key of the upstream.
+  dpkg-sig --sign "$SIGNING_KEY_FPR" "$outpkg"
 fi
 
 

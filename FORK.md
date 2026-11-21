@@ -121,8 +121,38 @@ release.
 | `CROSS_BUILD_RUNNER_JSON` | variable | The runner for the Windows and macOS builds. They cross compile and need wine, and the docker of the `ubuntu-latest` runners blocks a syscall that wine needs ([runner-images#14790](https://github.com/actions/runner-images/issues/14790)). Defaults to `["ubuntu-24.04"]`. |
 | `GHCR_OWNER` | variable | The owner of the images in the container registry. Defaults to `kosenkovpro`. |
 | `SIGNING_KEY` | secret | The GPG key used to sign the artifacts. |
+| `OSSIGN_CONFIG` | secret | The configuration of OSSign, a JSON with the certificate and the private key of the self-signed certificate for the Windows binaries. |
 | `CHOCO_API_KEY` | secret | The Chocolatey API key, without it the Chocolatey push is skipped. |
 | `MS_CLIENT_SECRET` | secret | The Microsoft Store secret, without it the Store push is skipped. |
+
+### The signing keys
+
+The keys of the fork are not in the repository. They live in the `.secret` directory
+of the working copy, which is in `.gitignore`:
+
+```
+.secret/
+  gpg/signing-key.asc        the private GPG key, the value of SIGNING_KEY
+  gpg/signing-key.pub.asc    the public GPG key, the users import it
+  gpg/signing-key.fpr        the fingerprint of the key
+  gpg/signing-key.rev        the revocation certificate of the key
+  ossign/cert.pem            the certificate for the Windows binaries
+  ossign/key.pem             the private key of the certificate
+  ossign/config.json         the configuration of OSSign, the value of OSSIGN_CONFIG
+```
+
+The GPG key signs every asset of the release. The publishing job runs
+`gpg --detach-sign` on each of them and uploads the `.sig` next to the file it
+belongs to. The public key of the release is the file `gpg/signing-key.pub.asc`.
+
+The certificate of `ossign` is self-signed: it is not issued by a certificate
+authority, so Windows still warns about an unknown publisher. It is used for the
+installer of the Windows build, the binaries inside the build are signed by the
+`Signed` tool of the upstream.
+
+The private GPG key has no passphrase, otherwise the signing would stop and ask for
+it in the middle of the non-interactive build. Keep the `.secret` directory safe,
+whoever has it can sign packages under the name of the fork.
 
 ### What is not ported
 
