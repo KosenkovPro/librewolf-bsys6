@@ -2,7 +2,7 @@
 set -eu
 
 $BSYS6/utils/require_command.sh curl jq
-$BSYS6/exports/forge.sh
+source "$BSYS6/exports/forge.sh"
 
 if [ "$#" -ne 2 ]; then
   echo 'Usage: download_dl.sh <name> <target_file>'

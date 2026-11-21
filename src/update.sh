@@ -2,8 +2,8 @@
 set -eu
 
 $BSYS6/utils/require_command.sh curl
-$BSYS6/exports/vars.sh # for $WORKDIR
-$BSYS6/exports/forge.sh
+source "$BSYS6/exports/vars.sh" # for $WORKDIR
+source "$BSYS6/exports/forge.sh"
 
 echo "-> Fetching version" >&2
 
