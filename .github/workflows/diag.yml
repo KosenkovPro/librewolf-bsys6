@@ -21,12 +21,11 @@ jobs:
       - name: Inspect the memory
         run: |
           echo "--- memory ---"
-          free -h
+          grep -E "MemTotal|MemAvailable|SwapTotal" /proc/meminfo
           echo "--- capabilities ---"
           grep CapEff /proc/self/status
           echo "--- filesystem of the workspace ---"
           df -hT "$GITHUB_WORKSPACE" /tmp
-          mount | grep -E "on / |workspace" | head -5
 
       - name: Add swap space
         run: |
@@ -36,5 +35,5 @@ jobs:
           chmod 600 "$swapfile"
           mkswap "$swapfile"
           swapon "$swapfile" && echo "SWAP ENABLED"
-          free -h
+          grep -E "MemTotal|MemAvailable|SwapTotal|SwapFree" /proc/meminfo
           swapon --show
