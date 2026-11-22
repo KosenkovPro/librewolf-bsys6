@@ -421,7 +421,7 @@ purge_update_cdn() {
     "https://api.calibour.com/v1/cdn/zones/$CLBR_CDN_ZONE/purge" >&2 || true
 }
 
-for file in $(find -name "*.exe" -o -name "*.zip" -o -name "*.tar.xz" -o -name "*.msix" -o -name "*.dmg" -o -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" -o -name "*.zsync"); do
+for file in $(find -name "*.exe" -o -name "*.zip" -o -name "*.tar.xz" -o -name "*.msix" -o -name "*.dmg" -o -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" -o -name "*.zsync" -o -name "*.nupkg"); do
   upload_asset "$file"
 done
 
@@ -438,6 +438,23 @@ if [ "$FORGE_TYPE" == "github" ]; then
     publish_update_github "$file"
   done
 
+  # The public key of the signing key is attached to the release, the
+  # signatures of the assets cannot be checked without it.
+  if [ -n "${SIGNING_KEY_FPR:-}" ]; then
+    pub_key="librewolf-signing-key.pub.asc"
+    echo "-> Exporting the public key of '$SIGNING_KEY_FPR'" >&2
+    if gpg --armor --export "$SIGNING_KEY_FPR" >"$pub_key" && [ -s "$pub_key" ]; then
+      sha256sum "$pub_key" >>"sha256sums.txt"
+      github_upload_asset "$pub_key"
+    else
+      # The release is published already, a missing key must not stop it.
+      echo "Warning: The public key of the signing key could not be exported" >&2
+      rm -f "$pub_key"
+    fi
+  fi
+
+  # The list of the checksums is the last asset, it holds the checksum of the
+  # public key as well.
   github_upload_asset "sha256sums.txt"
 
   echo "-> Release published: $GITHUB_RELEASE_URL" >&2
